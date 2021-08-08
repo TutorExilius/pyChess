@@ -1,0 +1,5 @@
+PyQt5
+PyQt5-Stubs
+black
+flake8
+mypy
