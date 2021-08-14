@@ -11,12 +11,15 @@ class Piece:
     name: str
     position: Tuple[int, int]
 
+    def get_color(self):
+        return "black" if "black" in self.name else "white"
+
     def get_basic_moves(self) -> List[Tuple[int, int]]:
         basic_moves = []
         self_i = self.position[0]
         self_j = self.position[1]
 
-        figure = self.name[: self.name.find("_")]  # king
+        figure = self.name[: self.name.find("_")]
 
         if figure == "♟":
             base_row = 1
@@ -197,11 +200,105 @@ class Board:
                 piece = white_pieces[i * 8 + j]
                 self._board[i + 6][j].piece = piece
 
+    def is_collision_free_move(
+        self, attacker_field: Tuple[int, int], threatened_field: Tuple[int, int]
+    ) -> bool:
+        attacker_piece = self.get_piece(*attacker_field)
+
+        if attacker_piece.symbol in ["♜", "♖"]:
+            if attacker_field[0] == threatened_field[0]:  # horizontal move
+                i = attacker_field[0]  # init once
+
+                to_left = attacker_field[1] >= threatened_field[1]
+                _range = (
+                    range(attacker_field[1] - 1, threatened_field[1] - 1, -1)
+                    if to_left
+                    else range(attacker_field[1] + 1, threatened_field[1] + 1)
+                )
+
+                for j in _range:
+                    _walking_over_piece = self.get_piece(i, j)
+
+                    if _walking_over_piece is not None:
+                        # check collision
+
+                        if (
+                            _walking_over_piece.get_color()
+                            == attacker_piece.get_color()
+                        ):
+                            return False
+                        elif j == threatened_field[1]:
+                            return True
+                        else:
+                            return False
+
+                return True
+
+            else:  # vertical move
+                j = attacker_field[1]  # init once
+
+                to_up = attacker_field[0] >= threatened_field[0]
+                _range = (
+                    range(attacker_field[0] - 1, threatened_field[0] - 1, -1)
+                    if to_up
+                    else range(attacker_field[0] + 1, threatened_field[0] + 1)
+                )
+
+                for i in _range:
+                    _walking_over_piece = self.get_piece(i, j)
+
+                    if _walking_over_piece is not None:
+                        if (
+                            _walking_over_piece.get_color()
+                            == attacker_piece.get_color()
+                        ):
+                            return False
+                        elif i == threatened_field[0]:
+                            return True
+                        else:
+                            return False
+
+                return True
+
+        elif attacker_piece.symbol in ["♝", "♗"]:
+            pass
+        elif attacker_piece.symbol in ["♞", "♘"]:
+            pass
+        elif attacker_piece.symbol in ["♛", "♕"]:
+            pass
+        elif attacker_piece.symbol in ["♚", "♔"]:
+            pass
+        elif attacker_piece.symbol in ["♟", "♙"]:
+            pass
+        else:
+            raise TypeError()
+
+        return False
+
     def get_field(self, i: int, j: int) -> Field:
         return self._board[i][j]
 
     def get_piece(self, i: int, j: int) -> Piece:
         return self._board[i][j].piece
+
+    def get_possible_moves(self, piece: Piece) -> List[Tuple[int, int]]:
+        basic_moves = piece.get_basic_moves()
+        print(f"Potential moves for {piece.symbol}: {basic_moves}")
+
+        colission_free_moves: List[Tuple[int, int]] = []
+        for basic_move in basic_moves:
+
+            if (
+                # piece != other_piece
+                # and other_piece.get_color() != piece.get_color()
+                # and
+                self.is_collision_free_move(piece.position, basic_move)
+            ):
+                colission_free_moves.append(basic_move)
+
+        print(f"Collision-Free moves for {piece.symbol}: {colission_free_moves}")
+
+        return colission_free_moves
 
     def move(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> None:
         from_i, from_j = from_pos
