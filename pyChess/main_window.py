@@ -1,5 +1,6 @@
 from functools import partial
 from pathlib import Path
+from typing import Tuple
 
 from PyQt5.QtWidgets import QMainWindow, QPushButton
 from PyQt5 import uic
@@ -16,16 +17,17 @@ class MainWindow(QMainWindow):
 
         self._focused_piece_button = None
         self.board = Board()
-
-        self._initialize_grid_layout()
+        self.initialize_new_board()
         self.update_ui()
 
+        # Debug only ---
         self.move_piece((0, 0), (2, 0))
         self.move_piece((1, 3), (2, 3))
         self.move_piece((7, 7), (5, 7))
         self.move_piece((6, 5), (5, 5))
         self.move_piece((7, 1), (5, 1))
         self.move_piece((7, 2), (5, 2))
+        # ---
 
     def reset_highlights(self) -> None:
         for i in range(8):
@@ -61,7 +63,10 @@ class MainWindow(QMainWindow):
 
             self.update_ui()
 
-    def _initialize_grid_layout(self) -> None:
+    def initialize_new_board(self) -> None:
+        if self.board is None:
+            self.board = Board()
+
         for i in range(8):
             for j in range(8):
                 white = (i + j) % 2 == 0
@@ -79,12 +84,11 @@ class MainWindow(QMainWindow):
                 button.field = field
                 field.update_button.connect(button.update_ui)
                 button.clicked.connect(partial(self.on_clicked, False, button))
-                button.update_ui()
 
         self.setFixedSize(self.sizeHint())
 
     def reset_board(self) -> None:
         self.board = Board()
 
-    def move_piece(self, from_pos: int, to_pos: int) -> None:
+    def move_piece(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> None:
         self.board.move(from_pos, to_pos)
