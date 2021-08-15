@@ -1,5 +1,5 @@
-PyQt5
-PyQt5-Stubs
 black
 flake8
 mypy
+PyQt5
+PyQt5-stubs

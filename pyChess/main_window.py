@@ -15,13 +15,17 @@ class MainWindow(QMainWindow):
         uic.loadUi(Path(__file__).parent / "ui" / "main_window.ui", self)
 
         self._focused_piece_button = None
-        self.board = None
+        self.board = Board()
 
-        self.reset_board()
-        self.initialize_board()
+        self._initialize_grid_layout()
         self.update_ui()
 
         self.move_piece((0, 0), (2, 0))
+        self.move_piece((1, 3), (2, 3))
+        self.move_piece((7, 7), (5, 7))
+        self.move_piece((6, 5), (5, 5))
+        self.move_piece((7, 1), (5, 1))
+        self.move_piece((7, 2), (5, 2))
 
     def reset_highlights(self) -> None:
         for i in range(8):
@@ -46,10 +50,9 @@ class MainWindow(QMainWindow):
         if piece is not None:
 
             self.reset_highlights()
-            print(f"possible moves for {piece.symbol}: {piece.get_basic_moves()}")
 
             if piece_button != self._focused_piece_button:
-                for i, j in piece.get_basic_moves():
+                for i, j in self.board.get_possible_moves(piece):
                     button = self.gridLayout.itemAtPosition(i, j).widget()
                     button.state = States.POSSIBLE_MOVE
                 self._focused_piece_button = piece_button
@@ -58,7 +61,7 @@ class MainWindow(QMainWindow):
 
             self.update_ui()
 
-    def initialize_board(self) -> None:
+    def _initialize_grid_layout(self) -> None:
         for i in range(8):
             for j in range(8):
                 white = (i + j) % 2 == 0
