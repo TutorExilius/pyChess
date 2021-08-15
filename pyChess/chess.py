@@ -1,15 +1,30 @@
 from typing import List, Tuple
-from dataclasses import dataclass
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
 
-@dataclass
 class Piece:
-    symbol: str
-    name: str
-    position: Tuple[int, int]
+    def __init__(self, symbol: str, name: str, position: Tuple[int, int]):
+        self.symbol: str = symbol
+        self.name: str = name
+        self._position: Tuple[int, int] = position
+        self.move_counter: int = 0
+        self.captured: bool = False
+
+    @property
+    def moved_least_once(self) -> bool:
+        return self.move_counter > 0
+
+    @property
+    def position(self):
+        return self._position
+
+    @position.setter
+    def position(self, value):
+        if self._position != value:
+            self._position = value
+            self.move_counter += 1
 
     def get_color(self):
         return "black" if "black" in self.name else "white"
@@ -136,9 +151,10 @@ class Piece:
 class Field(QWidget):
     update_button = pyqtSignal(str)
 
-    def __init__(self, piece: Piece = None):
+    def __init__(self, position: Tuple[int, int], piece: Piece = None):
         super(Field, self).__init__()
 
+        self.position = position
         self.piece = piece
         self.widget = None
 
@@ -150,7 +166,7 @@ class Field(QWidget):
 class Board:
     def __init__(self):
         w, h = 8, 8
-        self._board = [[Field() for x in range(w)] for y in range(h)]
+        self._board = [[Field(position=(y, x)) for x in range(w)] for y in range(h)]
 
         black_pieces = [
             Piece(symbol="♜", name="♜_1_black", position=(0, 0)),
@@ -201,23 +217,22 @@ class Board:
                 self._board[i + 6][j].piece = piece
 
     def is_collision_free_move(
-        self, attacker_field: Tuple[int, int], threatened_field: Tuple[int, int]
+        self, attacker_piece: Piece, threatened_field: Field
     ) -> bool:
-        attacker_piece = self.get_piece(*attacker_field)
+        attacker_piece_i, attacker_piece_j = attacker_piece.position
+        threatened_field_i, threatened_field_j = threatened_field.position
 
         if attacker_piece.symbol in ["♜", "♖"]:
-            if attacker_field[0] == threatened_field[0]:  # horizontal move
-                i = attacker_field[0]  # init once
-
-                to_left = attacker_field[1] >= threatened_field[1]
+            if attacker_piece_i == threatened_field_i:  # horizontal move
+                to_left = attacker_piece_j >= threatened_field_j
                 _range = (
-                    range(attacker_field[1] - 1, threatened_field[1] - 1, -1)
+                    range(attacker_piece_j - 1, threatened_field_j - 1, -1)
                     if to_left
-                    else range(attacker_field[1] + 1, threatened_field[1] + 1)
+                    else range(attacker_piece_j + 1, threatened_field_j + 1)
                 )
 
                 for j in _range:
-                    _walking_over_piece = self.get_piece(i, j)
+                    _walking_over_piece = self.get_piece(attacker_piece_i, j)
 
                     if _walking_over_piece is not None:
                         # check collision
@@ -227,7 +242,7 @@ class Board:
                             == attacker_piece.get_color()
                         ):
                             return False
-                        elif j == threatened_field[1]:
+                        elif j == threatened_field_j:
                             return True
                         else:
                             return False
@@ -235,17 +250,15 @@ class Board:
                 return True
 
             else:  # vertical move
-                j = attacker_field[1]  # init once
-
-                to_up = attacker_field[0] >= threatened_field[0]
+                to_up = attacker_piece_i >= threatened_field_i
                 _range = (
-                    range(attacker_field[0] - 1, threatened_field[0] - 1, -1)
+                    range(attacker_piece_i - 1, threatened_field_i - 1, -1)
                     if to_up
-                    else range(attacker_field[0] + 1, threatened_field[0] + 1)
+                    else range(attacker_piece_i + 1, threatened_field_i + 1)
                 )
 
                 for i in _range:
-                    _walking_over_piece = self.get_piece(i, j)
+                    _walking_over_piece = self.get_piece(i, attacker_piece_j)
 
                     if _walking_over_piece is not None:
                         if (
@@ -253,7 +266,7 @@ class Board:
                             == attacker_piece.get_color()
                         ):
                             return False
-                        elif i == threatened_field[0]:
+                        elif i == threatened_field_i:
                             return True
                         else:
                             return False
@@ -287,12 +300,12 @@ class Board:
 
         colission_free_moves: List[Tuple[int, int]] = []
         for basic_move in basic_moves:
-
+            field = self.get_field(*basic_move)
             if (
                 # piece != other_piece
                 # and other_piece.get_color() != piece.get_color()
                 # and
-                self.is_collision_free_move(piece.position, basic_move)
+                self.is_collision_free_move(piece, field)
             ):
                 colission_free_moves.append(basic_move)
 

@@ -27,6 +27,7 @@ class MainWindow(QMainWindow):
         self.move_piece((6, 5), (5, 5))
         self.move_piece((7, 1), (5, 1))
         self.move_piece((7, 2), (5, 2))
+        self.move_piece((7, 4), (5, 4))
         # ---
 
     def reset_highlights(self) -> None:
@@ -42,7 +43,6 @@ class MainWindow(QMainWindow):
                 piece = self.board.get_piece(i, j)
                 if piece is not None:
                     button.piece = piece
-                    piece.field = button
                     button.setText(button.piece.symbol)
 
                 button.update_ui()
@@ -85,6 +85,7 @@ class MainWindow(QMainWindow):
                 field.update_button.connect(button.update_ui)
                 button.clicked.connect(partial(self.on_clicked, False, button))
 
+        self.update_ui()
         self.setFixedSize(self.sizeHint())
 
     def reset_board(self) -> None:
