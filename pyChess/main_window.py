@@ -28,6 +28,8 @@ class MainWindow(QMainWindow):
         self.move_piece((7, 1), (5, 1))
         self.move_piece((7, 2), (5, 2))
         self.move_piece((7, 4), (5, 4))
+        self.move_piece((2, 3), (4, 3))
+
         # ---
 
     def reset_highlights(self) -> None:

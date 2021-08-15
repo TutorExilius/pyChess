@@ -52,7 +52,7 @@ class Piece:
             basic_moves.extend([(i, self_j) for i in range(8) if i != self_i])
             basic_moves.extend([(self_i, j) for j in range(8) if j != self_j])
         if figure == "♝" or figure == "♗" or figure == "♛" or figure == "♕":
-            # bottom right
+            # down right
             i = self_i
             j = self_j
 
@@ -125,12 +125,12 @@ class Piece:
 
             if figure == "♚":
                 base_pos = (0, 4)
-                if (self_i, self_j) == base_pos:  # rochade
+                if (self_i, self_j) == base_pos:  # castle
                     basic_moves.append((0, 0))
                     basic_moves.append((0, 7))
             else:
                 base_pos = (7, 4)
-                if (self_i, self_j) == base_pos:  # rochade
+                if (self_i, self_j) == base_pos:  # castle
                     basic_moves.append((7, 0))
                     basic_moves.append((7, 7))
 
@@ -157,6 +157,7 @@ class Field(QWidget):
         self.position = position
         self.piece = piece
         self.widget = None
+        self.threatened_by: List[Piece] = []
 
     def update_field(self) -> None:
         new_text = "" if self.piece is None else self.piece.symbol
@@ -280,13 +281,55 @@ class Board:
         elif attacker_piece.symbol in ["♛", "♕"]:
             pass
         elif attacker_piece.symbol in ["♚", "♔"]:
-            pass
+            if threatened_field.piece is not None:
+                is_castle_move = (
+                    (threatened_field.piece.symbol in ["♜", "♖"])
+                    and threatened_field.piece.get_color() == attacker_piece.get_color()
+                    and (
+                        not attacker_piece.moved_least_once
+                        and not threatened_field.piece.moved_least_once
+                    )
+                )
+            else:
+                is_castle_move = False
+
+            if is_castle_move:  # collision check for castle
+                # rule 3: crossing fields are not threatened
+                to_left = attacker_piece_j > threatened_field_j
+                _range = (
+                    range(attacker_piece_j - 1, threatened_field_j, -1)
+                    if to_left
+                    else range(attacker_piece_j + 1, threatened_field_j)
+                )
+
+                for j in _range:
+                    crossing_field = self.get_field(attacker_piece_i, j)
+                    if self.threatened_by_enemy(
+                        attacker_piece.get_color(), crossing_field
+                    ):
+                        return False
+
+                return True
+            else:  # normal move
+                if threatened_field.piece is not None and (
+                    threatened_field.piece.get_color() == attacker_piece.get_color()
+                ):
+                    return False
+                elif self.threatened_by_enemy(
+                    attacker_piece.get_color(), threatened_field
+                ):
+                    return False
+
+                return True
         elif attacker_piece.symbol in ["♟", "♙"]:
             pass
         else:
             raise TypeError()
 
         return False
+
+    def threatened_by_enemy(self, color: str, field: Field) -> bool:
+        return any(field == color for field in field.threatened_by)
 
     def get_field(self, i: int, j: int) -> Field:
         return self._board[i][j]
