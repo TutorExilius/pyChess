@@ -168,6 +168,7 @@ class Board:
     def __init__(self):
         w, h = 8, 8
         self._board = [[Field(position=(y, x)) for x in range(w)] for y in range(h)]
+        self.active_pieces: List[Piece] = []
 
         black_pieces = [
             Piece(symbol="♜", name="♜_1_black", position=(0, 0)),
@@ -211,11 +212,30 @@ class Board:
             for j in range(8):
                 piece = black_pieces[i * 8 + j]
                 self._board[i][j].piece = piece
+                self.active_pieces.append(piece)
 
         for i in range(2):
             for j in range(8):
                 piece = white_pieces[i * 8 + j]
                 self._board[i + 6][j].piece = piece
+                self.active_pieces.append(piece)
+
+        self.analyse_threatened_fields()
+
+    def analyse_threatened_fields(self) -> None:
+        for piece in self.active_pieces:
+            possible_piece_moves = self.get_possible_moves(piece)
+
+            for threatened_position in possible_piece_moves:
+                field = self.get_field(*threatened_position)
+                field.threatened_by.append(piece)
+
+    def remove_threat_from_fields_for_piece(self, piece: Piece) -> None:
+        possible_piece_moves = self.get_possible_moves(piece)
+
+        for threatened_position in possible_piece_moves:
+            field = self.get_field(*threatened_position)
+            field.threatened_by.remove(piece)
 
     def is_collision_free_move(
         self, attacker_piece: Piece, threatened_field: Field
@@ -281,20 +301,18 @@ class Board:
         elif attacker_piece.symbol in ["♛", "♕"]:
             pass
         elif attacker_piece.symbol in ["♚", "♔"]:
-            if threatened_field.piece is not None:
-                is_castle_move = (
-                    (threatened_field.piece.symbol in ["♜", "♖"])
-                    and threatened_field.piece.get_color() == attacker_piece.get_color()
-                    and (
-                        not attacker_piece.moved_least_once
-                        and not threatened_field.piece.moved_least_once
-                    )
-                )
-            else:
-                is_castle_move = False
+            is_castle_move = abs(attacker_piece_j - threatened_field_j) > 1
 
             if is_castle_move:  # collision check for castle
-                # rule 3: crossing fields are not threatened
+                # threatened_field has friendy rook to castle with
+                if (
+                    threatened_field.piece is None
+                    or threatened_field.piece.get_color() != attacker_piece.get_color()
+                    or threatened_field.piece.moved_least_once
+                    or attacker_piece.moved_least_once
+                ):
+                    return False
+
                 to_left = attacker_piece_j > threatened_field_j
                 _range = (
                     range(attacker_piece_j - 1, threatened_field_j, -1)
@@ -302,11 +320,14 @@ class Board:
                     else range(attacker_piece_j + 1, threatened_field_j)
                 )
 
+                # check traversing fields
                 for j in _range:
                     crossing_field = self.get_field(attacker_piece_i, j)
-                    if self.threatened_by_enemy(
-                        attacker_piece.get_color(), crossing_field
-                    ):
+                    _threatened_by_enemy = self.threatened_by_enemy(
+                        crossing_field, attacker_piece
+                    )
+
+                    if _threatened_by_enemy or crossing_field.piece is not None:
                         return False
 
                 return True
@@ -315,9 +336,7 @@ class Board:
                     threatened_field.piece.get_color() == attacker_piece.get_color()
                 ):
                     return False
-                elif self.threatened_by_enemy(
-                    attacker_piece.get_color(), threatened_field
-                ):
+                elif self.threatened_by_enemy(threatened_field, attacker_piece):
                     return False
 
                 return True
@@ -328,8 +347,10 @@ class Board:
 
         return False
 
-    def threatened_by_enemy(self, color: str, field: Field) -> bool:
-        return any(field == color for field in field.threatened_by)
+    def threatened_by_enemy(self, field: Field, piece: Piece) -> bool:
+        return any(
+            _piece.get_color() != piece.get_color() for _piece in field.threatened_by
+        )
 
     def get_field(self, i: int, j: int) -> Field:
         return self._board[i][j]
@@ -363,10 +384,14 @@ class Board:
         from_field = self._board[from_i][from_j]
         to_field = self._board[to_i][to_j]
 
-        piece = from_field.piece
-        piece.position = to_pos
-        to_field.piece = piece
+        from_piece = from_field.piece
+        self.remove_threat_from_fields_for_piece(from_piece)
+
+        from_piece.position = to_pos
+        to_field.piece = from_piece
         from_field.piece = None
 
         from_field.update_field()
         to_field.update_field()
+
+        self.analyse_threatened_fields()

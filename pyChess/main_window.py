@@ -1,7 +1,9 @@
 from functools import partial
 from pathlib import Path
 from typing import Tuple
+import time
 
+from PyQt5.QtCore import QTimer, QCoreApplication
 from PyQt5.QtWidgets import QMainWindow, QPushButton
 from PyQt5 import uic
 
@@ -20,17 +22,40 @@ class MainWindow(QMainWindow):
         self.initialize_new_board()
         self.update_ui()
 
-        # Debug only ---
-        self.move_piece((0, 0), (2, 0))
-        self.move_piece((1, 3), (2, 3))
-        self.move_piece((7, 7), (5, 7))
-        self.move_piece((6, 5), (5, 5))
-        self.move_piece((7, 1), (5, 1))
-        self.move_piece((7, 2), (5, 2))
-        self.move_piece((7, 4), (5, 4))
-        self.move_piece((2, 3), (4, 3))
+        s = 3000
+        print(f"Start Simulation in {s/1000} seconds...")
+        QTimer.singleShot(s, partial(self.on_simulation_start, 0.1))
 
-        # ---
+    def on_simulation_start(self, intervall_in_sec):
+        # Debug only ---
+        # self.move_piece((0, 0), (2, 0))
+
+        moves = [
+            ((1, 3), (2, 3)),
+            ((7, 7), (5, 7)),
+            ((6, 5), (5, 5)),
+            ((7, 1), (5, 1)),
+            ((7, 2), (5, 2)),
+            ((7, 4), (5, 4)),
+            ((2, 3), (4, 3)),
+            ((0, 1), (2, 1)),
+            ((0, 2), (2, 2)),
+            ((0, 3), (2, 4)),
+            ((0, 4), (0, 3)),
+            ((0, 3), (0, 4)),
+            ((0, 0), (0, 1)),
+            ((0, 1), (0, 0)),
+            # ((7, 0), (2, 3)),
+        ]
+
+        for _move in moves:
+            from_pos, to_pos = _move
+            print(from_pos, "->", to_pos)
+            self.move_piece(from_pos, to_pos)
+            self.update_ui()
+
+            QCoreApplication.processEvents()
+            time.sleep(intervall_in_sec)
 
     def reset_highlights(self) -> None:
         for i in range(8):
