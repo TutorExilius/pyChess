@@ -17,16 +17,16 @@ class Piece:
         return self.move_counter > 0
 
     @property
-    def position(self):
+    def position(self) -> Tuple[int, int]:
         return self._position
 
     @position.setter
-    def position(self, value):
+    def position(self, value: Tuple[int, int]):
         if self._position != value:
             self._position = value
             self.move_counter += 1
 
-    def get_color(self):
+    def get_color(self) -> str:
         return "black" if "black" in self.name else "white"
 
     def get_basic_moves(self) -> List[Tuple[int, int]]:
@@ -105,18 +105,16 @@ class Piece:
                 basic_moves.append((i, j))
 
         if figure == "♞" or figure == "♘":
-            moves = []
-            moves.append((self_i + 1, self_j - 2))
-            moves.append((self_i + 1, self_j + 2))
-
-            moves.append((self_i - 1, self_j - 2))
-            moves.append((self_i - 1, self_j + 2))
-
-            moves.append((self_i + 2, self_j - 1))
-            moves.append((self_i + 2, self_j + 1))
-
-            moves.append((self_i - 2, self_j - 1))
-            moves.append((self_i - 2, self_j + 1))
+            moves = [
+                (self_i + 1, self_j - 2),
+                (self_i + 1, self_j + 2),
+                (self_i - 1, self_j - 2),
+                (self_i - 1, self_j + 2),
+                (self_i + 2, self_j - 1),
+                (self_i + 2, self_j + 1),
+                (self_i - 2, self_j - 1),
+                (self_i - 2, self_j + 1),
+            ]
 
             basic_moves.extend([(i, j) for i, j in moves if 0 <= i < 8 and 0 <= j < 8])
 
@@ -304,7 +302,7 @@ class Board:
             is_castle_move = abs(attacker_piece_j - threatened_field_j) > 1
 
             if is_castle_move:  # collision check for castle
-                # threatened_field has friendy rook to castle with
+                # threatened_field has friendly rook to castle with
                 if (
                     threatened_field.piece is None
                     or threatened_field.piece.get_color() != attacker_piece.get_color()
@@ -347,7 +345,8 @@ class Board:
 
         return False
 
-    def threatened_by_enemy(self, field: Field, piece: Piece) -> bool:
+    @staticmethod
+    def threatened_by_enemy(field: Field, piece: Piece) -> bool:
         return any(
             _piece.get_color() != piece.get_color() for _piece in field.threatened_by
         )
@@ -362,7 +361,7 @@ class Board:
         basic_moves = piece.get_basic_moves()
         print(f"Potential moves for {piece.symbol}: {basic_moves}")
 
-        colission_free_moves: List[Tuple[int, int]] = []
+        collision_free_moves: List[Tuple[int, int]] = []
         for basic_move in basic_moves:
             field = self.get_field(*basic_move)
             if (
@@ -371,11 +370,11 @@ class Board:
                 # and
                 self.is_collision_free_move(piece, field)
             ):
-                colission_free_moves.append(basic_move)
+                collision_free_moves.append(basic_move)
 
-        print(f"Collision-Free moves for {piece.symbol}: {colission_free_moves}")
+        print(f"Collision-Free moves for {piece.symbol}: {collision_free_moves}")
 
-        return colission_free_moves
+        return collision_free_moves
 
     def move(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> None:
         from_i, from_j = from_pos

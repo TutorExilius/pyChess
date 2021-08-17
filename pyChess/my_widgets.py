@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import Union
+
 from PyQt5.QtWidgets import QPushButton
 
 

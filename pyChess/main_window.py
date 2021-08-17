@@ -1,14 +1,14 @@
+import time
 from functools import partial
 from pathlib import Path
 from typing import Tuple
-import time
 
-from PyQt5.QtCore import QTimer, QCoreApplication
-from PyQt5.QtWidgets import QMainWindow, QPushButton
 from PyQt5 import uic
+from PyQt5.QtCore import QCoreApplication, QTimer
+from PyQt5.QtWidgets import QMainWindow, QPushButton
 
-from my_widgets import BlackButton, WhiteButton, States
 from chess import Board
+from my_widgets import BlackButton, States, WhiteButton
 
 
 class MainWindow(QMainWindow):
@@ -23,13 +23,11 @@ class MainWindow(QMainWindow):
         self.update_ui()
 
         s = 3000
-        print(f"Start Simulation in {s/1000} seconds...")
+        print(f"Start Simulation in {s / 1000} seconds...")
         QTimer.singleShot(s, partial(self.on_simulation_start, 0.1))
 
-    def on_simulation_start(self, intervall_in_sec):
+    def on_simulation_start(self, interval_in_sec: int) -> None:
         # Debug only ---
-        # self.move_piece((0, 0), (2, 0))
-
         moves = [
             ((1, 3), (2, 3)),
             ((7, 7), (5, 7)),
@@ -45,7 +43,6 @@ class MainWindow(QMainWindow):
             ((0, 3), (0, 4)),
             ((0, 0), (0, 1)),
             ((0, 1), (0, 0)),
-            # ((7, 0), (2, 3)),
         ]
 
         for _move in moves:
@@ -55,7 +52,7 @@ class MainWindow(QMainWindow):
             self.update_ui()
 
             QCoreApplication.processEvents()
-            time.sleep(intervall_in_sec)
+            time.sleep(interval_in_sec)
 
     def reset_highlights(self) -> None:
         for i in range(8):
@@ -102,7 +99,7 @@ class MainWindow(QMainWindow):
                 size = f"width: {factor}px; height: {factor}px;"
 
                 button = WhiteButton() if white else BlackButton()
-                button.setStyleSheet(f"{size} font-size: {factor/2}pt;")
+                button.setStyleSheet(f"{size} font-size: {factor / 2}pt;")
 
                 self.gridLayout.addWidget(button, i, j)
 
