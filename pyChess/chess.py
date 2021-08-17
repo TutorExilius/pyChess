@@ -12,6 +12,9 @@ class Piece:
         self.move_counter: int = 0
         self.captured: bool = False
 
+    def __repr__(self):
+        return self.name
+
     @property
     def moved_least_once(self) -> bool:
         return self.move_counter > 0
@@ -38,16 +41,40 @@ class Piece:
 
         if figure == "♟":
             base_row = 1
-            basic_moves.append((self_i + 1, self_j))
 
             if self_i == base_row:
                 basic_moves.append((self_i + 2, self_j))
+
+            down_i = self_i + 1
+            if down_i <= 7:
+                down_left = (down_i, self_j - 1)
+                down_right = (down_i, self_j + 1)
+                basic_moves.append((down_i, self_j))
+
+                if down_left[1] >= 0:
+                    basic_moves.append(down_left)
+
+                if down_right[1] <= 7:
+                    basic_moves.append(down_right)
+
         if figure == "♙":
             base_row = 6
-            basic_moves.append((self_i - 1, self_j))
 
             if self_i == base_row:
                 basic_moves.append((self_i - 2, self_j))
+
+            up_i = self_i - 1
+            if up_i >= 0:
+                up_left = (up_i, self_j - 1)
+                up_right = (up_i, self_j + 1)
+                basic_moves.append((up_i, self_j))
+
+                if up_left[1] >= 0:
+                    basic_moves.append(up_left)
+
+                if up_right[1] <= 7:
+                    basic_moves.append(up_right)
+
         if figure == "♜" or figure == "♖" or figure == "♛" or figure == "♕":
             basic_moves.extend([(i, self_j) for i in range(8) if i != self_i])
             basic_moves.extend([(self_i, j) for j in range(8) if j != self_j])
@@ -222,6 +249,11 @@ class Board:
 
     def analyse_threatened_fields(self) -> None:
         for piece in self.active_pieces:
+            # DEBUG ONLY ---
+            if piece.name == "♖_1_white" or piece.name == "♖_2_white":
+                print(">>>>>>", len(self.get_possible_moves(piece)))
+            # ----
+
             possible_piece_moves = self.get_possible_moves(piece)
 
             for threatened_position in possible_piece_moves:
@@ -243,7 +275,7 @@ class Board:
 
         if attacker_piece.symbol in ["♜", "♖"]:
             if attacker_piece_i == threatened_field_i:  # horizontal move
-                to_left = attacker_piece_j >= threatened_field_j
+                to_left = attacker_piece_j > threatened_field_j
                 _range = (
                     range(attacker_piece_j - 1, threatened_field_j - 1, -1)
                     if to_left
@@ -261,9 +293,7 @@ class Board:
                             == attacker_piece.get_color()
                         ):
                             return False
-                        elif j == threatened_field_j:
-                            return True
-                        else:
+                        elif j != threatened_field_j:
                             return False
 
                 return True
@@ -276,7 +306,9 @@ class Board:
                     else range(attacker_piece_i + 1, threatened_field_i + 1)
                 )
 
+                first_enemy_in_row = False
                 for i in _range:
+                    print("RANGE ---------", list(_range))
                     _walking_over_piece = self.get_piece(i, attacker_piece_j)
 
                     if _walking_over_piece is not None:
@@ -285,6 +317,18 @@ class Board:
                             == attacker_piece.get_color()
                         ):
                             return False
+                        elif (
+                            _walking_over_piece.get_color()
+                            != attacker_piece.get_color()
+                        ):
+                            if not first_enemy_in_row:
+                                first_enemy_in_row = True
+                                print("##### FIRST ")
+                                continue
+                            else:
+                                print("##### SECOND ")
+                                return False
+
                         elif i == threatened_field_i:
                             return True
                         else:
@@ -334,7 +378,9 @@ class Board:
                     threatened_field.piece.get_color() == attacker_piece.get_color()
                 ):
                     return False
-                elif self.threatened_by_enemy(threatened_field, attacker_piece):
+
+                if self.threatened_by_enemy(threatened_field, attacker_piece):
+                    print(">>>>>>", threatened_field.threatened_by)
                     return False
 
                 return True

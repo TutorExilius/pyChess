@@ -24,7 +24,7 @@ class MainWindow(QMainWindow):
 
         s = 3000
         print(f"Start Simulation in {s / 1000} seconds...")
-        QTimer.singleShot(s, partial(self.on_simulation_start, 0.1))
+        QTimer.singleShot(s, partial(self.on_simulation_start, 0))
 
     def on_simulation_start(self, interval_in_sec: int) -> None:
         # Debug only ---
@@ -34,15 +34,20 @@ class MainWindow(QMainWindow):
             ((6, 5), (5, 5)),
             ((7, 1), (5, 1)),
             ((7, 2), (5, 2)),
-            ((7, 4), (5, 4)),
+            ((7, 3), (7, 7)),
             ((2, 3), (4, 3)),
             ((0, 1), (2, 1)),
             ((0, 2), (2, 2)),
             ((0, 3), (2, 4)),
-            ((0, 4), (0, 3)),
-            ((0, 3), (0, 4)),
-            ((0, 0), (0, 1)),
-            ((0, 1), (0, 0)),
+            ((0, 4), (4, 0)),
+            # ((0, 3), (0, 4)),
+            # ((0, 0), (0, 1)),
+            # ((0, 1), (0, 0)),
+            # ((0, 4), (4, 5)),
+            ((7, 6), (3, 0)),
+            ((6, 6), (4, 6)),
+            ((5, 7), (4, 7)),
+            ((6, 1), (0, 1)),
         ]
 
         for _move in moves:
