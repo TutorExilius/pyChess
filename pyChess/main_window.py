@@ -52,7 +52,6 @@ class MainWindow(QMainWindow):
 
         for _move in moves:
             from_pos, to_pos = _move
-            print(from_pos, "->", to_pos)
             self.move_piece(from_pos, to_pos)
             self.update_ui()
 
@@ -78,8 +77,11 @@ class MainWindow(QMainWindow):
 
     def on_clicked(self, _, piece_button: QPushButton) -> None:
         piece = piece_button.field.piece
+        print(
+            f"FIELD {piece_button.field.position} - "
+            f"Threatened by {piece_button.field.threatened_by}"
+        )
         if piece is not None:
-
             self.reset_highlights()
 
             if piece_button != self._focused_piece_button:

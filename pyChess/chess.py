@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Set, Tuple
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
@@ -11,6 +11,12 @@ class Piece:
         self._position: Tuple[int, int] = position
         self.move_counter: int = 0
         self.captured: bool = False
+
+    def __eq__(self, other):
+        return self.name == other.name
+
+    def __hash__(self):
+        return hash(self.name)
 
     def __repr__(self):
         return self.name
@@ -182,7 +188,7 @@ class Field(QWidget):
         self.position = position
         self.piece = piece
         self.widget = None
-        self.threatened_by: List[Piece] = []
+        self.threatened_by: Set[Piece] = set()
 
     def update_field(self) -> None:
         new_text = "" if self.piece is None else self.piece.symbol
@@ -249,23 +255,18 @@ class Board:
 
     def analyse_threatened_fields(self) -> None:
         for piece in self.active_pieces:
-            # DEBUG ONLY ---
-            if piece.name == "♖_1_white" or piece.name == "♖_2_white":
-                print(">>>>>>", len(self.get_possible_moves(piece)))
-            # ----
-
             possible_piece_moves = self.get_possible_moves(piece)
+            print(f"{piece.name}: possible: {possible_piece_moves}")
 
             for threatened_position in possible_piece_moves:
                 field = self.get_field(*threatened_position)
-                field.threatened_by.append(piece)
+                field.threatened_by.add(piece)
 
-    def remove_threat_from_fields_for_piece(self, piece: Piece) -> None:
-        possible_piece_moves = self.get_possible_moves(piece)
-
-        for threatened_position in possible_piece_moves:
-            field = self.get_field(*threatened_position)
-            field.threatened_by.remove(piece)
+    def remove_threat_from_fields(self) -> None:
+        for i in range(0, 8):
+            for j in range(0, 8):
+                field = self.get_field(i, j)
+                field.threatened_by = set()
 
     def is_collision_free_move(
         self, attacker_piece: Piece, threatened_field: Field
@@ -308,7 +309,6 @@ class Board:
 
                 first_enemy_in_row = False
                 for i in _range:
-                    print("RANGE ---------", list(_range))
                     _walking_over_piece = self.get_piece(i, attacker_piece_j)
 
                     if _walking_over_piece is not None:
@@ -323,10 +323,8 @@ class Board:
                         ):
                             if not first_enemy_in_row:
                                 first_enemy_in_row = True
-                                print("##### FIRST ")
                                 continue
                             else:
-                                print("##### SECOND ")
                                 return False
 
                         elif i == threatened_field_i:
@@ -380,12 +378,11 @@ class Board:
                     return False
 
                 if self.threatened_by_enemy(threatened_field, attacker_piece):
-                    print(">>>>>>", threatened_field.threatened_by)
                     return False
 
                 return True
         elif attacker_piece.symbol in ["♟", "♙"]:
-            pass
+            return True
         else:
             raise TypeError()
 
@@ -405,7 +402,6 @@ class Board:
 
     def get_possible_moves(self, piece: Piece) -> List[Tuple[int, int]]:
         basic_moves = piece.get_basic_moves()
-        print(f"Potential moves for {piece.symbol}: {basic_moves}")
 
         collision_free_moves: List[Tuple[int, int]] = []
         for basic_move in basic_moves:
@@ -418,8 +414,6 @@ class Board:
             ):
                 collision_free_moves.append(basic_move)
 
-        print(f"Collision-Free moves for {piece.symbol}: {collision_free_moves}")
-
         return collision_free_moves
 
     def move(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> None:
@@ -430,7 +424,7 @@ class Board:
         to_field = self._board[to_i][to_j]
 
         from_piece = from_field.piece
-        self.remove_threat_from_fields_for_piece(from_piece)
+        self.remove_threat_from_fields()
 
         from_piece.position = to_pos
         to_field.piece = from_piece
