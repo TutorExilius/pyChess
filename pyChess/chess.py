@@ -1,7 +1,6 @@
 from typing import List, Set, Tuple
 
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtCore import pyqtSignal, QObject
 
 
 class Piece:
@@ -81,10 +80,11 @@ class Piece:
                 if up_right[1] <= 7:
                     basic_moves.append(up_right)
 
-        if figure == "♜" or figure == "♖" or figure == "♛" or figure == "♕":
+        if figure in ["♜", "♖", "♛", "♕"]:
             basic_moves.extend([(i, self_j) for i in range(8) if i != self_i])
             basic_moves.extend([(self_i, j) for j in range(8) if j != self_j])
-        if figure == "♝" or figure == "♗" or figure == "♛" or figure == "♕":
+
+        if figure in ["♝", "♗", "♛", "♕"]:
             # down right
             i = self_i
             j = self_j
@@ -137,7 +137,7 @@ class Piece:
 
                 basic_moves.append((i, j))
 
-        if figure == "♞" or figure == "♘":
+        if figure in ["♞", "♘"]:
             moves = [
                 (self_i + 1, self_j - 2),
                 (self_i + 1, self_j + 2),
@@ -151,7 +151,7 @@ class Piece:
 
             basic_moves.extend([(i, j) for i, j in moves if 0 <= i < 8 and 0 <= j < 8])
 
-        if figure == "♚" or figure == "♔":
+        if figure in ["♚", "♔"]:
             moves = []
 
             if figure == "♚":
@@ -179,7 +179,7 @@ class Piece:
         return basic_moves
 
 
-class Field(QWidget):
+class Field(QObject):
     update_button = pyqtSignal(str)
 
     def __init__(self, position: Tuple[int, int], piece: Piece = None):
@@ -187,7 +187,6 @@ class Field(QWidget):
 
         self.position = position
         self.piece = piece
-        self.widget = None
         self.threatened_by: Set[Piece] = set()
 
     def update_field(self) -> None:
@@ -373,7 +372,7 @@ class Board:
 
                 return True
         elif attacker_piece.symbol in ["♟", "♙"]:
-            return True
+            pass
         else:
             raise TypeError()
 

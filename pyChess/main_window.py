@@ -48,6 +48,7 @@ class MainWindow(QMainWindow):
             ((6, 6), (4, 6)),
             ((5, 7), (4, 7)),
             ((6, 1), (0, 1)),
+            # ((3, 7), (4, 6)),
         ]
 
         for _move in moves:
@@ -111,7 +112,6 @@ class MainWindow(QMainWindow):
                 self.gridLayout.addWidget(button, i, j)
 
                 field = self.board.get_field(i, j)
-                field.widget = button
                 button.field = field
                 field.update_button.connect(button.update_ui)
                 button.clicked.connect(partial(self.on_clicked, False, button))
