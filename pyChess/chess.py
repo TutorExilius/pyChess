@@ -276,7 +276,7 @@ class Board:
 
         if attacker_piece.symbol in ["♜", "♖"]:
             if attacker_piece_i == threatened_field_i:  # horizontal move
-                to_left = attacker_piece_j > threatened_field_j
+                to_left = attacker_piece_j >= threatened_field_j
                 _range = (
                     range(attacker_piece_j - 1, threatened_field_j - 1, -1)
                     if to_left
@@ -294,7 +294,9 @@ class Board:
                             == attacker_piece.get_color()
                         ):
                             return False
-                        elif j != threatened_field_j:
+                        elif j == threatened_field_j:
+                            return True
+                        else:
                             return False
 
                 return True
@@ -307,7 +309,6 @@ class Board:
                     else range(attacker_piece_i + 1, threatened_field_i + 1)
                 )
 
-                first_enemy_in_row = False
                 for i in _range:
                     _walking_over_piece = self.get_piece(i, attacker_piece_j)
 
@@ -317,16 +318,6 @@ class Board:
                             == attacker_piece.get_color()
                         ):
                             return False
-                        elif (
-                            _walking_over_piece.get_color()
-                            != attacker_piece.get_color()
-                        ):
-                            if not first_enemy_in_row:
-                                first_enemy_in_row = True
-                                continue
-                            else:
-                                return False
-
                         elif i == threatened_field_i:
                             return True
                         else:
