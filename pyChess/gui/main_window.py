@@ -7,8 +7,9 @@ from PyQt5 import uic
 from PyQt5.QtCore import QCoreApplication, QTimer
 from PyQt5.QtWidgets import QMainWindow, QPushButton
 
-from chess import Board
-from my_widgets import BlackButton, States, WhiteButton
+from pyChess.chess import logic
+from pyChess.chess.types import Board
+from pyChess.gui.my_widgets import BlackButton, States, WhiteButton
 
 
 class MainWindow(QMainWindow):
@@ -39,7 +40,7 @@ class MainWindow(QMainWindow):
             ((0, 1), (2, 1)),
             ((0, 2), (2, 2)),
             ((0, 3), (2, 4)),
-            ((0, 4), (3, 7)),
+            ((0, 4), (2, 7)),
             # ((0, 3), (0, 4)),
             # ((0, 0), (0, 1)),
             # ((0, 1), (0, 0)),
@@ -69,7 +70,7 @@ class MainWindow(QMainWindow):
         for i in range(8):
             for j in range(8):
                 button = self.gridLayout.itemAtPosition(i, j).widget()
-                piece = self.board.get_piece(i, j)
+                piece = logic.get_piece(self.board, i, j)
                 if piece is not None:
                     button.piece = piece
                     button.setText(button.piece.symbol)
@@ -86,7 +87,7 @@ class MainWindow(QMainWindow):
             self.reset_highlights()
 
             if piece_button != self._focused_piece_button:
-                for i, j in self.board.get_possible_moves(piece):
+                for i, j in logic.get_possible_moves(self.board, piece):
                     button = self.gridLayout.itemAtPosition(i, j).widget()
                     button.state = States.POSSIBLE_MOVE
                 self._focused_piece_button = piece_button
@@ -111,7 +112,7 @@ class MainWindow(QMainWindow):
 
                 self.gridLayout.addWidget(button, i, j)
 
-                field = self.board.get_field(i, j)
+                field = logic.get_field(self.board, i, j)
                 button.field = field
                 field.update_button.connect(button.update_ui)
                 button.clicked.connect(partial(self.on_clicked, False, button))
@@ -123,4 +124,4 @@ class MainWindow(QMainWindow):
         self.board = Board()
 
     def move_piece(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> None:
-        self.board.move(from_pos, to_pos)
+        logic.move(self.board, from_pos, to_pos)
