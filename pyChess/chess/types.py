@@ -252,6 +252,11 @@ class Board:
 
         self.analyse_threatened_fields()
 
+    def block_signals(self, block: bool) -> None:
+        for i in range(8):
+            for j in range(8):
+                self._board[i][j].blockSignals(block)
+
     def analyse_threatened_fields(self) -> None:
         for piece in self.active_pieces:
             possible_piece_moves = self.get_possible_moves(piece)
