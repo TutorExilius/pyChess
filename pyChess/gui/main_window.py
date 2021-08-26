@@ -8,7 +8,7 @@ from PyQt5.QtCore import QCoreApplication, QTimer
 from PyQt5.QtWidgets import QMainWindow, QPushButton
 
 from pyChess.chess import logic
-from pyChess.chess.types import Board
+from pyChess.chess.my_types import Board
 from pyChess.gui.my_widgets import BlackButton, States, WhiteButton
 
 
@@ -40,14 +40,14 @@ class MainWindow(QMainWindow):
             ((0, 1), (2, 1)),
             ((0, 2), (2, 2)),
             ((0, 3), (2, 4)),
-            ((0, 4), (2, 7)),
+            ((0, 4), (3, 7)),
             # ((0, 3), (0, 4)),
             # ((0, 0), (0, 1)),
             # ((0, 1), (0, 0)),
             # ((0, 4), (4, 5)),
             ((7, 6), (3, 0)),
             ((6, 6), (4, 6)),
-            ((5, 7), (4, 7)),
+            ((5, 7), (5, 6)),
             ((6, 1), (0, 1)),
             # ((3, 7), (4, 6)),
         ]
@@ -97,6 +97,9 @@ class MainWindow(QMainWindow):
             self.update_ui()
 
     def initialize_new_board(self) -> None:
+        def set_button_text(button, button_text):
+            button.setText(button_text)
+
         if self.board is None:
             self.board = Board()
 
@@ -114,7 +117,8 @@ class MainWindow(QMainWindow):
 
                 field = logic.get_field(self.board, i, j)
                 button.field = field
-                field.update_button.connect(button.update_ui)
+
+                field.ui_callback = partial(set_button_text, button)
                 button.clicked.connect(partial(self.on_clicked, False, button))
 
         self.update_ui()

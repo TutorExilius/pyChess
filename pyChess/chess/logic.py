@@ -1,7 +1,8 @@
 from typing import List, Tuple
+
 from copy import deepcopy
 
-from pyChess.chess.types import Board, Field, Piece
+from pyChess.chess.my_types import Board, Field, Piece
 
 
 def analyse_threatened_fields(board: Board) -> None:
@@ -32,30 +33,25 @@ def get_piece(board: Board, i: int, j: int) -> Piece:
 
 def get_possible_moves(board: Board, piece: Piece) -> List[Tuple[int, int]]:
     possible_moves = board.get_possible_moves(piece)
-    remove_moves = []
+    king_in_check_positions: List[Tuple[int, int]] = []
 
     if piece.symbol in ["♚", "♔"]:
-        # TODO: copy board, remove signal/slot connections
-        #  and move in all kings possible fields to detect checks
-        #  if done, romve them from list 'possible_moves'
-
-        board.block_signals(True)
-
-        cloned_board = deepcopy(board)
-        king_field = cloned_board.get_field(**Piece.position)
-        king_field.blockSignals(True)
+        king_pos = piece.position
 
         for possible_move in possible_moves:
-            move_field = cloned_board.get_field(*possible_move)
-            move_field.blockSignals(True)
+            cloned_board = deepcopy(board)
+            cloned_board.move(king_pos, possible_move)
+            pos_i, pos_j = possible_move
+            to_field = cloned_board.get_field(pos_i, pos_j)
 
-            cloned_board.move(**king_field.position, **move_field.position)
+            if cloned_board.threatened_by_enemy(to_field, piece):
+                king_in_check_positions.append(possible_move)
 
-            if len(king_field.threatened_by) > 0:
-                remove_moves.append(possible_move)
-
-        board.block_signals(False)
-    return possible_moves - remove_moves
+    return [
+        possible_move
+        for possible_move in possible_moves
+        if possible_move not in king_in_check_positions
+    ]
 
 
 def move(board: Board, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> None:

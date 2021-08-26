@@ -1,6 +1,7 @@
 from typing import List, Set, Tuple
+from copy import deepcopy
 
-from PyQt5.QtCore import pyqtSignal, QObject
+# from PyQt5.QtCore import pyqtSignal, QObject
 
 
 class Piece:
@@ -10,12 +11,6 @@ class Piece:
         self._position: Tuple[int, int] = position
         self.move_counter: int = 0
         self.captured: bool = False
-
-    def __eq__(self, other):
-        return self.name == other.name
-
-    def __hash__(self):
-        return hash(self.name)
 
     def __repr__(self):
         return self.name
@@ -179,25 +174,38 @@ class Piece:
         return basic_moves
 
 
-class Field(QObject):
-    update_button = pyqtSignal(str)
-
-    def __init__(self, position: Tuple[int, int], piece: Piece = None):
-        super(Field, self).__init__()
-
+class Field:
+    def __init__(
+        self, position: Tuple[int, int], piece: Piece = None, ui_callback=None
+    ):
+        self.ui_callback = ui_callback
         self.position = position
         self.piece = piece
         self.threatened_by: Set[Piece] = set()
 
+    def __deepcopy__(self, memodict={}):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memodict[id(self)] = result
+        for k, v in self.__dict__.items():
+            if k == "ui_callback":
+                setattr(result, k, None)
+            elif k == "threatened_by":
+                setattr(result, k, [])
+            else:
+                setattr(result, k, deepcopy(v, memodict))
+        return result
+
     def update_field(self) -> None:
-        new_text = "" if self.piece is None else self.piece.symbol
-        self.update_button.emit(new_text)
+        if self.ui_callback is not None:
+            new_text = "" if self.piece is None else self.piece.symbol
+            self.ui_callback(new_text)
 
 
 class Board:
     def __init__(self):
         w, h = 8, 8
-        self._board = [[Field(position=(y, x)) for x in range(w)] for y in range(h)]
+        self._board = [[Field(position=(i, j)) for j in range(w)] for i in range(h)]
         self.active_pieces: List[Piece] = []
 
         black_pieces = [
@@ -252,10 +260,13 @@ class Board:
 
         self.analyse_threatened_fields()
 
-    def block_signals(self, block: bool) -> None:
-        for i in range(8):
-            for j in range(8):
-                self._board[i][j].blockSignals(block)
+    def __deepcopy__(self, memodict={}):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memodict[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, deepcopy(v, memodict))
+        return result
 
     def analyse_threatened_fields(self) -> None:
         for piece in self.active_pieces:
