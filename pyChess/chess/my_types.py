@@ -283,23 +283,23 @@ class Board:
                 field = self.get_field(i, j)
                 field.threatened_by = set()
 
-    def is_collision_free_move(
-        self, attacker_piece: Piece, threatened_field: Field
-    ) -> bool:
-        attacker_piece_i, attacker_piece_j = attacker_piece.position
-        threatened_field_i, threatened_field_j = threatened_field.position
-
-        if attacker_piece.symbol in ["♜", "♖"]:
-            if attacker_piece_i == threatened_field_i:  # horizontal move
-                to_left = attacker_piece_j >= threatened_field_j
-                _range = (
-                    range(attacker_piece_j - 1, threatened_field_j - 1, -1)
-                    if to_left
-                    else range(attacker_piece_j + 1, threatened_field_j + 1)
-                )
-
-                for j in _range:
-                    _walking_over_piece = self.get_piece(attacker_piece_i, j)
+    def _is_diagonal_move_collision_free(
+        self,
+        attacker_piece_i,
+        attacker_piece_j,
+        threatened_field_i,
+        threatened_field_j,
+        attacker_piece,
+    ):
+        # top
+        if threatened_field_i < attacker_piece_i:
+            # left
+            if threatened_field_j < attacker_piece_j:
+                for i, j in zip(
+                    range(attacker_piece_i - 1, threatened_field_i - 1, -1),
+                    range(attacker_piece_j - 1, threatened_field_j - 1, -1),
+                ):
+                    _walking_over_piece = self.get_piece(i, j)
 
                     if _walking_over_piece is not None:
                         # check collision
@@ -309,43 +309,178 @@ class Board:
                             == attacker_piece.get_color()
                         ):
                             return False
-                        elif j == threatened_field_j:
+                        elif i == threatened_field_i and j == threatened_field_j:
                             return True
                         else:
                             return False
-
-                return True
-
-            else:  # vertical move
-                to_up = attacker_piece_i >= threatened_field_i
-                _range = (
-                    range(attacker_piece_i - 1, threatened_field_i - 1, -1)
-                    if to_up
-                    else range(attacker_piece_i + 1, threatened_field_i + 1)
-                )
-
-                for i in _range:
-                    _walking_over_piece = self.get_piece(i, attacker_piece_j)
+            # right
+            else:
+                for i, j in zip(
+                    range(attacker_piece_i - 1, threatened_field_i - 1, -1),
+                    range(attacker_piece_j + 1, threatened_field_j + 1),
+                ):
+                    _walking_over_piece = self.get_piece(i, j)
 
                     if _walking_over_piece is not None:
+                        # check collision
+
                         if (
                             _walking_over_piece.get_color()
                             == attacker_piece.get_color()
                         ):
                             return False
-                        elif i == threatened_field_i:
+                        elif i == threatened_field_i and j == threatened_field_j:
                             return True
                         else:
                             return False
+        # down
+        else:
+            # left
+            if threatened_field_j < attacker_piece_j:
+                for i, j in zip(
+                    range(attacker_piece_i + 1, threatened_field_i + 1),
+                    range(attacker_piece_j - 1, threatened_field_j - 1, -1),
+                ):
+                    _walking_over_piece = self.get_piece(i, j)
 
-                return True
+                    if _walking_over_piece is not None:
+                        # check collision
 
+                        if (
+                            _walking_over_piece.get_color()
+                            == attacker_piece.get_color()
+                        ):
+                            return False
+                        elif i == threatened_field_i and j == threatened_field_j:
+                            return True
+                        else:
+                            return False
+            # right
+            else:
+                for i, j in zip(
+                    range(attacker_piece_i + 1, threatened_field_i + 1),
+                    range(attacker_piece_j + 1, threatened_field_j + 1),
+                ):
+                    _walking_over_piece = self.get_piece(i, j)
+
+                    if _walking_over_piece is not None:
+                        # check collision
+
+                        if (
+                            _walking_over_piece.get_color()
+                            == attacker_piece.get_color()
+                        ):
+                            return False
+                        elif i == threatened_field_i and j == threatened_field_j:
+                            return True
+                        else:
+                            return False
+        return True
+
+    def _is_straight_move_collision_free(
+        self,
+        attacker_piece_i,
+        attacker_piece_j,
+        threatened_field_i,
+        threatened_field_j,
+        attacker_piece,
+    ):
+        if attacker_piece_i == threatened_field_i:  # horizontal move
+            to_left = attacker_piece_j >= threatened_field_j
+            _range = (
+                range(attacker_piece_j - 1, threatened_field_j - 1, -1)
+                if to_left
+                else range(attacker_piece_j + 1, threatened_field_j + 1)
+            )
+
+            for j in _range:
+                _walking_over_piece = self.get_piece(attacker_piece_i, j)
+
+                if _walking_over_piece is not None:
+                    # check collision
+
+                    if _walking_over_piece.get_color() == attacker_piece.get_color():
+                        return False
+                    elif j == threatened_field_j:
+                        return True
+                    else:
+                        return False
+
+            return True
+
+        else:  # vertical move
+            to_up = attacker_piece_i >= threatened_field_i
+            _range = (
+                range(attacker_piece_i - 1, threatened_field_i - 1, -1)
+                if to_up
+                else range(attacker_piece_i + 1, threatened_field_i + 1)
+            )
+
+            for i in _range:
+                _walking_over_piece = self.get_piece(i, attacker_piece_j)
+
+                if _walking_over_piece is not None:
+                    if _walking_over_piece.get_color() == attacker_piece.get_color():
+                        return False
+                    elif i == threatened_field_i:
+                        return True
+                    else:
+                        return False
+
+            return True
+
+    def is_collision_free_move(
+        self, attacker_piece: Piece, threatened_field: Field
+    ) -> bool:
+        attacker_piece_i, attacker_piece_j = attacker_piece.position
+        threatened_field_i, threatened_field_j = threatened_field.position
+
+        if attacker_piece.symbol in ["♜", "♖"]:
+            return self._is_straight_move_collision_free(
+                attacker_piece_i,
+                attacker_piece_j,
+                threatened_field_i,
+                threatened_field_j,
+                attacker_piece,
+            )
         elif attacker_piece.symbol in ["♝", "♗"]:
-            pass
+            return self._is_diagonal_move_collision_free(
+                attacker_piece_i,
+                attacker_piece_j,
+                threatened_field_i,
+                threatened_field_j,
+                attacker_piece,
+            )
         elif attacker_piece.symbol in ["♞", "♘"]:
-            pass
+            if (
+                threatened_field.piece is not None
+                and threatened_field.piece.get_color() == attacker_piece.get_color()
+            ):
+                return False
+
+            return True
         elif attacker_piece.symbol in ["♛", "♕"]:
-            pass
+            is_straight_move = (
+                threatened_field_i == attacker_piece_i
+                or threatened_field_j == attacker_piece_j
+            )
+
+            if is_straight_move:
+                return self._is_straight_move_collision_free(
+                    attacker_piece_i,
+                    attacker_piece_j,
+                    threatened_field_i,
+                    threatened_field_j,
+                    attacker_piece,
+                )
+            else:
+                return self._is_diagonal_move_collision_free(
+                    attacker_piece_i,
+                    attacker_piece_j,
+                    threatened_field_i,
+                    threatened_field_j,
+                    attacker_piece,
+                )
         elif attacker_piece.symbol in ["♚", "♔"]:
             is_castle_move = abs(attacker_piece_j - threatened_field_j) > 1
 
