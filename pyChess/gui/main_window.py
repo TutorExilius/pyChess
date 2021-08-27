@@ -77,10 +77,10 @@ class MainWindow(QMainWindow):
                 button.update_ui()
 
     def on_clicked(self, _, piece_button: QPushButton) -> None:
-        piece = piece_button.field.piece
+        piece = piece_button.square.piece
         print(
-            f"FIELD {piece_button.field.position} - "
-            f"Threatened by {piece_button.field.threatened_by}"
+            f"square {piece_button.square.position} - "
+            f"Threatened by {piece_button.square.threatened_by}"
         )
         if piece is not None:
             self.reset_highlights()
@@ -114,10 +114,10 @@ class MainWindow(QMainWindow):
 
                 self.gridLayout.addWidget(button, i, j)
 
-                field = logic.get_field(self.board, i, j)
-                button.field = field
+                square = logic.get_square(self.board, i, j)
+                button.square = square
 
-                field.ui_callback = partial(set_button_text, button)
+                square.ui_callback = partial(set_button_text, button)
                 button.clicked.connect(partial(self.on_clicked, False, button))
 
         self.update_ui()

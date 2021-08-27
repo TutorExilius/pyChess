@@ -2,29 +2,29 @@ from typing import List, Tuple
 
 from copy import deepcopy
 
-from pyChess.chess.my_types import Board, Field, Piece
+from pyChess.chess.my_types import Board, Square, Piece
 
 
-def analyse_threatened_fields(board: Board) -> None:
-    board.analyse_threatened_fields()
+def analyse_threatened_squares(board: Board) -> None:
+    board.analyse_threatened_squares()
 
 
-def remove_threat_from_fields(board: Board) -> None:
-    board.remove_threat_from_fields()
+def remove_threat_from_squares(board: Board) -> None:
+    board.remove_threat_from_squares()
 
 
 def is_collision_free_move(
-    board: Board, attacker_piece: Piece, threatened_field: Field
+    board: Board, attacker_piece: Piece, threatened_square: Square
 ) -> bool:
-    return board.is_collision_free_move(attacker_piece, threatened_field)
+    return board.is_collision_free_move(attacker_piece, threatened_square)
 
 
-def threatened_by_enemy(field: Field, piece: Piece) -> bool:
-    return Board.threatened_by_enemy(field, piece)
+def threatened_by_enemy(square: Square, piece: Piece) -> bool:
+    return Board.threatened_by_enemy(square, piece)
 
 
-def get_field(board: Board, i: int, j: int) -> Field:
-    return board.get_field(i, j)
+def get_square(board: Board, i: int, j: int) -> Square:
+    return board.get_square(i, j)
 
 
 def get_piece(board: Board, i: int, j: int) -> Piece:
@@ -42,9 +42,9 @@ def get_possible_moves(board: Board, piece: Piece) -> List[Tuple[int, int]]:
             cloned_board = deepcopy(board)
             cloned_board.move(king_pos, possible_move)
             pos_i, pos_j = possible_move
-            to_field = cloned_board.get_field(pos_i, pos_j)
+            to_square = cloned_board.get_square(pos_i, pos_j)
 
-            if cloned_board.threatened_by_enemy(to_field, piece):
+            if cloned_board.threatened_by_enemy(to_square, piece):
                 king_in_check_positions.append(possible_move)
 
     return [

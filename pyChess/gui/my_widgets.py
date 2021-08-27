@@ -18,7 +18,7 @@ class BaseButton(QPushButton):
 
         self.state = States.NORMAL
         self._state_before = self.state
-        self.field = None
+        self.square = None
         self.activated = False
         self.default_style_color = None
         self.last_move_style_color = None

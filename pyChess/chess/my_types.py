@@ -151,12 +151,12 @@ class Piece:
 
             if figure == "♚":
                 base_pos = (0, 4)
-                if (self_i, self_j) == base_pos:  # castle
+                if (self_i, self_j) == base_pos:  # castling
                     basic_moves.append((0, 0))
                     basic_moves.append((0, 7))
             else:
                 base_pos = (7, 4)
-                if (self_i, self_j) == base_pos:  # castle
+                if (self_i, self_j) == base_pos:  # castling
                     basic_moves.append((7, 0))
                     basic_moves.append((7, 7))
 
@@ -174,7 +174,7 @@ class Piece:
         return basic_moves
 
 
-class Field:
+class Square:
     def __init__(
         self, position: Tuple[int, int], piece: Piece = None, ui_callback=None
     ):
@@ -196,7 +196,7 @@ class Field:
                 setattr(result, k, deepcopy(v, memodict))
         return result
 
-    def update_field(self) -> None:
+    def update_square(self) -> None:
         if self.ui_callback is not None:
             new_text = "" if self.piece is None else self.piece.symbol
             self.ui_callback(new_text)
@@ -205,8 +205,9 @@ class Field:
 class Board:
     def __init__(self):
         w, h = 8, 8
-        self._board = [[Field(position=(i, j)) for j in range(w)] for i in range(h)]
+        self._board = [[Square(position=(i, j)) for j in range(w)] for i in range(h)]
         self.active_pieces: List[Piece] = []
+        self.last_move: Tuple[Square, Square] = None
 
         black_pieces = [
             Piece(symbol="♜", name="♜_1_black", position=(0, 0)),
@@ -258,7 +259,7 @@ class Board:
                 self._board[i + 6][j].piece = piece
                 self.active_pieces.append(piece)
 
-        self.analyse_threatened_fields()
+        self.analyse_threatened_squares()
 
     def __deepcopy__(self, memodict={}):
         cls = self.__class__
@@ -268,36 +269,36 @@ class Board:
             setattr(result, k, deepcopy(v, memodict))
         return result
 
-    def analyse_threatened_fields(self) -> None:
+    def analyse_threatened_squares(self) -> None:
         for piece in self.active_pieces:
             possible_piece_moves = self.get_possible_moves(piece)
             print(f"{piece.name}: possible: {possible_piece_moves}")
 
             for threatened_position in possible_piece_moves:
-                field = self.get_field(*threatened_position)
-                field.threatened_by.add(piece)
+                square = self.get_square(*threatened_position)
+                square.threatened_by.add(piece)
 
-    def remove_threat_from_fields(self) -> None:
+    def remove_threat_from_squares(self) -> None:
         for i in range(0, 8):
             for j in range(0, 8):
-                field = self.get_field(i, j)
-                field.threatened_by = set()
+                square = self.get_square(i, j)
+                square.threatened_by = set()
 
     def _is_diagonal_move_collision_free(
         self,
         attacker_piece_i,
         attacker_piece_j,
-        threatened_field_i,
-        threatened_field_j,
+        threatened_square_i,
+        threatened_square_j,
         attacker_piece,
     ):
         # top
-        if threatened_field_i < attacker_piece_i:
+        if threatened_square_i < attacker_piece_i:
             # left
-            if threatened_field_j < attacker_piece_j:
+            if threatened_square_j < attacker_piece_j:
                 for i, j in zip(
-                    range(attacker_piece_i - 1, threatened_field_i - 1, -1),
-                    range(attacker_piece_j - 1, threatened_field_j - 1, -1),
+                    range(attacker_piece_i - 1, threatened_square_i - 1, -1),
+                    range(attacker_piece_j - 1, threatened_square_j - 1, -1),
                 ):
                     _walking_over_piece = self.get_piece(i, j)
 
@@ -309,15 +310,15 @@ class Board:
                             == attacker_piece.get_color()
                         ):
                             return False
-                        elif i == threatened_field_i and j == threatened_field_j:
+                        elif i == threatened_square_i and j == threatened_square_j:
                             return True
                         else:
                             return False
             # right
             else:
                 for i, j in zip(
-                    range(attacker_piece_i - 1, threatened_field_i - 1, -1),
-                    range(attacker_piece_j + 1, threatened_field_j + 1),
+                    range(attacker_piece_i - 1, threatened_square_i - 1, -1),
+                    range(attacker_piece_j + 1, threatened_square_j + 1),
                 ):
                     _walking_over_piece = self.get_piece(i, j)
 
@@ -329,17 +330,17 @@ class Board:
                             == attacker_piece.get_color()
                         ):
                             return False
-                        elif i == threatened_field_i and j == threatened_field_j:
+                        elif i == threatened_square_i and j == threatened_square_j:
                             return True
                         else:
                             return False
         # down
         else:
             # left
-            if threatened_field_j < attacker_piece_j:
+            if threatened_square_j < attacker_piece_j:
                 for i, j in zip(
-                    range(attacker_piece_i + 1, threatened_field_i + 1),
-                    range(attacker_piece_j - 1, threatened_field_j - 1, -1),
+                    range(attacker_piece_i + 1, threatened_square_i + 1),
+                    range(attacker_piece_j - 1, threatened_square_j - 1, -1),
                 ):
                     _walking_over_piece = self.get_piece(i, j)
 
@@ -351,15 +352,15 @@ class Board:
                             == attacker_piece.get_color()
                         ):
                             return False
-                        elif i == threatened_field_i and j == threatened_field_j:
+                        elif i == threatened_square_i and j == threatened_square_j:
                             return True
                         else:
                             return False
             # right
             else:
                 for i, j in zip(
-                    range(attacker_piece_i + 1, threatened_field_i + 1),
-                    range(attacker_piece_j + 1, threatened_field_j + 1),
+                    range(attacker_piece_i + 1, threatened_square_i + 1),
+                    range(attacker_piece_j + 1, threatened_square_j + 1),
                 ):
                     _walking_over_piece = self.get_piece(i, j)
 
@@ -371,7 +372,7 @@ class Board:
                             == attacker_piece.get_color()
                         ):
                             return False
-                        elif i == threatened_field_i and j == threatened_field_j:
+                        elif i == threatened_square_i and j == threatened_square_j:
                             return True
                         else:
                             return False
@@ -381,16 +382,16 @@ class Board:
         self,
         attacker_piece_i,
         attacker_piece_j,
-        threatened_field_i,
-        threatened_field_j,
+        threatened_square_i,
+        threatened_square_j,
         attacker_piece,
     ):
-        if attacker_piece_i == threatened_field_i:  # horizontal move
-            to_left = attacker_piece_j >= threatened_field_j
+        if attacker_piece_i == threatened_square_i:  # horizontal move
+            to_left = attacker_piece_j >= threatened_square_j
             _range = (
-                range(attacker_piece_j - 1, threatened_field_j - 1, -1)
+                range(attacker_piece_j - 1, threatened_square_j - 1, -1)
                 if to_left
-                else range(attacker_piece_j + 1, threatened_field_j + 1)
+                else range(attacker_piece_j + 1, threatened_square_j + 1)
             )
 
             for j in _range:
@@ -401,7 +402,7 @@ class Board:
 
                     if _walking_over_piece.get_color() == attacker_piece.get_color():
                         return False
-                    elif j == threatened_field_j:
+                    elif j == threatened_square_j:
                         return True
                     else:
                         return False
@@ -409,11 +410,11 @@ class Board:
             return True
 
         else:  # vertical move
-            to_up = attacker_piece_i >= threatened_field_i
+            to_up = attacker_piece_i >= threatened_square_i
             _range = (
-                range(attacker_piece_i - 1, threatened_field_i - 1, -1)
+                range(attacker_piece_i - 1, threatened_square_i - 1, -1)
                 if to_up
-                else range(attacker_piece_i + 1, threatened_field_i + 1)
+                else range(attacker_piece_i + 1, threatened_square_i + 1)
             )
 
             for i in _range:
@@ -422,7 +423,7 @@ class Board:
                 if _walking_over_piece is not None:
                     if _walking_over_piece.get_color() == attacker_piece.get_color():
                         return False
-                    elif i == threatened_field_i:
+                    elif i == threatened_square_i:
                         return True
                     else:
                         return False
@@ -430,95 +431,95 @@ class Board:
             return True
 
     def is_collision_free_move(
-        self, attacker_piece: Piece, threatened_field: Field
+        self, attacker_piece: Piece, threatened_square: Square
     ) -> bool:
         attacker_piece_i, attacker_piece_j = attacker_piece.position
-        threatened_field_i, threatened_field_j = threatened_field.position
+        threatened_square_i, threatened_square_j = threatened_square.position
 
         if attacker_piece.symbol in ["♜", "♖"]:
             return self._is_straight_move_collision_free(
                 attacker_piece_i,
                 attacker_piece_j,
-                threatened_field_i,
-                threatened_field_j,
+                threatened_square_i,
+                threatened_square_j,
                 attacker_piece,
             )
         elif attacker_piece.symbol in ["♝", "♗"]:
             return self._is_diagonal_move_collision_free(
                 attacker_piece_i,
                 attacker_piece_j,
-                threatened_field_i,
-                threatened_field_j,
+                threatened_square_i,
+                threatened_square_j,
                 attacker_piece,
             )
         elif attacker_piece.symbol in ["♞", "♘"]:
             if (
-                threatened_field.piece is not None
-                and threatened_field.piece.get_color() == attacker_piece.get_color()
+                threatened_square.piece is not None
+                and threatened_square.piece.get_color() == attacker_piece.get_color()
             ):
                 return False
 
             return True
         elif attacker_piece.symbol in ["♛", "♕"]:
             is_straight_move = (
-                threatened_field_i == attacker_piece_i
-                or threatened_field_j == attacker_piece_j
+                threatened_square_i == attacker_piece_i
+                or threatened_square_j == attacker_piece_j
             )
 
             if is_straight_move:
                 return self._is_straight_move_collision_free(
                     attacker_piece_i,
                     attacker_piece_j,
-                    threatened_field_i,
-                    threatened_field_j,
+                    threatened_square_i,
+                    threatened_square_j,
                     attacker_piece,
                 )
             else:
                 return self._is_diagonal_move_collision_free(
                     attacker_piece_i,
                     attacker_piece_j,
-                    threatened_field_i,
-                    threatened_field_j,
+                    threatened_square_i,
+                    threatened_square_j,
                     attacker_piece,
                 )
         elif attacker_piece.symbol in ["♚", "♔"]:
-            is_castle_move = abs(attacker_piece_j - threatened_field_j) > 1
+            is_castling_move = abs(attacker_piece_j - threatened_square_j) > 1
 
-            if is_castle_move:  # collision check for castle
-                # threatened_field has friendly rook to castle with
+            if is_castling_move:  # collision check for castling
+                # threatened_square has friendly rook to castling with
                 if (
-                    threatened_field.piece is None
-                    or threatened_field.piece.get_color() != attacker_piece.get_color()
-                    or threatened_field.piece.moved_least_once
+                    threatened_square.piece is None
+                    or threatened_square.piece.get_color() != attacker_piece.get_color()
+                    or threatened_square.piece.moved_least_once
                     or attacker_piece.moved_least_once
                 ):
                     return False
 
-                to_left = attacker_piece_j > threatened_field_j
+                to_left = attacker_piece_j > threatened_square_j
                 _range = (
-                    range(attacker_piece_j - 1, threatened_field_j, -1)
+                    range(attacker_piece_j - 1, threatened_square_j, -1)
                     if to_left
-                    else range(attacker_piece_j + 1, threatened_field_j)
+                    else range(attacker_piece_j + 1, threatened_square_j)
                 )
 
-                # check traversing fields
+                # check traversing squares
                 for j in _range:
-                    crossing_field = self.get_field(attacker_piece_i, j)
+                    crossing_square = self.get_square(attacker_piece_i, j)
                     _threatened_by_enemy = self.threatened_by_enemy(
-                        crossing_field, attacker_piece
+                        crossing_square, attacker_piece
                     )
 
-                    if _threatened_by_enemy or crossing_field.piece is not None:
+                    if _threatened_by_enemy or crossing_square.piece is not None:
                         return False
 
                 return True
             else:  # normal move
-                if threatened_field.piece is not None and (
-                    threatened_field.piece.get_color() == attacker_piece.get_color()
+                if threatened_square.piece is not None and (
+                    threatened_square.piece.get_color() == attacker_piece.get_color()
                 ):
                     return False
 
-                if self.threatened_by_enemy(threatened_field, attacker_piece):
+                if self.threatened_by_enemy(threatened_square, attacker_piece):
                     return False
 
                 return True
@@ -530,12 +531,12 @@ class Board:
         return False
 
     @staticmethod
-    def threatened_by_enemy(field: Field, piece: Piece) -> bool:
+    def threatened_by_enemy(square: Square, piece: Piece) -> bool:
         return any(
-            _piece.get_color() != piece.get_color() for _piece in field.threatened_by
+            _piece.get_color() != piece.get_color() for _piece in square.threatened_by
         )
 
-    def get_field(self, i: int, j: int) -> Field:
+    def get_square(self, i: int, j: int) -> Square:
         return self._board[i][j]
 
     def get_piece(self, i: int, j: int) -> Piece:
@@ -546,12 +547,12 @@ class Board:
 
         collision_free_moves: List[Tuple[int, int]] = []
         for basic_move in basic_moves:
-            field = self.get_field(*basic_move)
+            square = self.get_square(*basic_move)
             if (
                 # piece != other_piece
                 # and other_piece.get_color() != piece.get_color()
                 # and
-                self.is_collision_free_move(piece, field)
+                self.is_collision_free_move(piece, square)
             ):
                 collision_free_moves.append(basic_move)
 
@@ -561,17 +562,18 @@ class Board:
         from_i, from_j = from_pos
         to_i, to_j = to_pos
 
-        from_field = self._board[from_i][from_j]
-        to_field = self._board[to_i][to_j]
+        from_square = self._board[from_i][from_j]
+        to_square = self._board[to_i][to_j]
 
-        from_piece = from_field.piece
-        self.remove_threat_from_fields()
+        from_piece = from_square.piece
+        self.remove_threat_from_squares()
 
         from_piece.position = to_pos
-        to_field.piece = from_piece
-        from_field.piece = None
+        to_square.piece = from_piece
+        from_square.piece = None
 
-        from_field.update_field()
-        to_field.update_field()
+        from_square.update_square()
+        to_square.update_square()
 
-        self.analyse_threatened_fields()
+        self.last_move = (from_square, to_square)
+        self.analyse_threatened_squares()
