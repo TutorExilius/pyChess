@@ -207,7 +207,7 @@ class Board:
         w, h = 8, 8
         self._board = [[Square(position=(i, j)) for j in range(w)] for i in range(h)]
         self.active_pieces: List[Piece] = []
-        self.last_move: Tuple[Square, Square] = None
+        self.last_moves: List[Tuple[Square, Square]] = []
 
         black_pieces = [
             Piece(symbol="♜", name="♜_1_black", position=(0, 0)),
@@ -524,7 +524,67 @@ class Board:
 
                 return True
         elif attacker_piece.symbol in ["♟", "♙"]:
-            pass
+            is_diagonal = attacker_piece_j != threatened_square_j
+
+            if is_diagonal:
+                is_diagonal_enemy = (
+                    threatened_square.piece is not None
+                    and threatened_square.piece.get_color()
+                    != attacker_piece.get_color()
+                )
+
+                if not is_diagonal_enemy:
+                    if not self.last_moves:
+                        return False
+
+                    last_from_square, last_to_square = self.last_moves[-1]
+                    last_move_piece = last_to_square.piece
+
+                    was_to_step_opening = (
+                        abs(last_from_square.position[0] - last_to_square.position[0])
+                        == 2
+                    )
+
+                    is_last_pawn_enemy_move = False
+                    next_to_attacker = False
+
+                    if last_move_piece:
+                        is_last_pawn_enemy_move = (
+                            last_move_piece.get_color() != attacker_piece.get_color()
+                        )
+                        next_to_attacker = (
+                            abs(attacker_piece_j - last_move_piece.position[1]) == 1
+                        )
+                        behind_to_last_move_piece = (
+                            abs(last_move_piece.position[0] - threatened_square_i) == 1
+                        ) and last_move_piece.position[1] == threatened_square_j
+
+                    if (
+                        is_last_pawn_enemy_move
+                        and was_to_step_opening
+                        and next_to_attacker
+                        and behind_to_last_move_piece
+                    ):
+                        return True
+                else:
+                    return True
+            else:
+                if abs(threatened_square_i - attacker_piece_i) == 2:  # two step opening
+                    in_front_i = (
+                        attacker_piece_i + 1
+                        if attacker_piece.get_color() == "black"
+                        else attacker_piece_i - 1
+                    )
+
+                    if 0 <= in_front_i <= 7:
+                        in_front_is_free = (
+                            self.get_piece(in_front_i, attacker_piece_j) is None
+                        )
+
+                        if threatened_square.piece is None and in_front_is_free:
+                            return True
+                else:
+                    return threatened_square.piece is None
         else:
             raise TypeError()
 
@@ -575,5 +635,5 @@ class Board:
         from_square.update_square()
         to_square.update_square()
 
-        self.last_move = (from_square, to_square)
+        self.last_moves.append((from_square, to_square))
         self.analyse_threatened_squares()
