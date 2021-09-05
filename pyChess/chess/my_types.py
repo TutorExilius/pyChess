@@ -259,7 +259,14 @@ class Board:
                 self._board[i + 6][j].piece = piece
                 self.active_pieces.append(piece)
 
-        self.analyse_threatened_squares()
+        self.reinitialize_threatenings()
+
+    @staticmethod
+    def is_pass_only(square: Square, piece: Piece) -> bool:
+        if piece.symbol in ["♟", "♙"] and square.position[1] == piece.position[1]:
+            return True
+
+        return False
 
     def __deepcopy__(self, memodict={}):
         cls = self.__class__
@@ -276,7 +283,9 @@ class Board:
 
             for threatened_position in possible_piece_moves:
                 square = self.get_square(*threatened_position)
-                square.threatened_by.add(piece)
+
+                if not Board.is_pass_only(square, piece):
+                    square.threatened_by.add(piece)
 
     def remove_threat_from_squares(self) -> None:
         for i in range(0, 8):
