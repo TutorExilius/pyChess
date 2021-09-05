@@ -67,6 +67,9 @@ class MainWindow(QMainWindow):
                 button = self.gridLayout.itemAtPosition(i, j).widget()
                 button.state = States.NORMAL
 
+        self.activated_square = None
+        self.update_ui()
+
     def update_ui(self) -> None:
         for i in range(8):
             for j in range(8):
@@ -84,6 +87,14 @@ class MainWindow(QMainWindow):
         if piece is None or (
             self.activated_square is not None and self.activated_square.piece == piece
         ):
+            if self.activated_square is not None and piece is None:
+                activated_piece = self.activated_square.piece
+                possible_moves = logic.get_possible_moves(self.board, activated_piece)
+
+                if piece_button.square.position in possible_moves:
+                    self.move_piece(
+                        self.activated_square.position, piece_button.square.position
+                    )
             return
 
         if self.activated_square is None or self.activated_square.piece != piece:
@@ -129,3 +140,4 @@ class MainWindow(QMainWindow):
 
     def move_piece(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> None:
         logic.move(self.board, from_pos, to_pos)
+        self.reset_highlights()
