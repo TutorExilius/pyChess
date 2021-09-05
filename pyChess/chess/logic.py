@@ -5,8 +5,8 @@ from copy import deepcopy
 from pyChess.chess.my_types import Board, Square, Piece
 
 
-def analyse_threatened_squares(board: Board) -> None:
-    board.analyse_threatened_squares()
+def reinitialize_threatenings(board: Board) -> None:
+    board.reinitialize_threatenings()
 
 
 def remove_threat_from_squares(board: Board) -> None:

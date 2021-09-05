@@ -18,10 +18,10 @@ class MainWindow(QMainWindow):
 
         uic.loadUi(Path(__file__).parent / "ui" / "main_window.ui", self)
 
-        self._focused_piece_button = None
         self.board = Board()
         self.initialize_new_board()
         self.update_ui()
+        self.activated_square = None
 
         s = 3000
         print(f"Start Simulation in {s / 1000} seconds...")
@@ -49,7 +49,7 @@ class MainWindow(QMainWindow):
             ((6, 6), (3, 6)),
             ((6, 1), (0, 1)),
             ((1, 5), (3, 5)),
-            ((2, 1), (3, 1)),
+            # ((2, 1), (3, 1)),
             # ((3, 7), (4, 6)),
         ]
 
@@ -80,20 +80,19 @@ class MainWindow(QMainWindow):
 
     def on_clicked(self, _, piece_button: QPushButton) -> None:
         piece = piece_button.square.piece
-        print(
-            f"square {piece_button.square.position} - "
-            f"Threatened by {piece_button.square.threatened_by}"
-        )
-        if piece is not None:
-            self.reset_highlights()
 
-            if piece_button != self._focused_piece_button:
-                for i, j in logic.get_possible_moves(self.board, piece):
-                    button = self.gridLayout.itemAtPosition(i, j).widget()
-                    button.state = States.POSSIBLE_MOVE
-                self._focused_piece_button = piece_button
-            else:
-                self._focused_piece_button = None
+        if piece is None or (
+            self.activated_square is not None and self.activated_square.piece == piece
+        ):
+            return
+
+        if self.activated_square is None or self.activated_square.piece != piece:
+            self.reset_highlights()
+            self.activated_square = piece_button.square
+
+            for i, j in logic.get_possible_moves(self.board, piece):
+                button = self.gridLayout.itemAtPosition(i, j).widget()
+                button.state = States.POSSIBLE_MOVE
 
             self.update_ui()
 

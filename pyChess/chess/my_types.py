@@ -276,7 +276,7 @@ class Board:
             setattr(result, k, deepcopy(v, memodict))
         return result
 
-    def analyse_threatened_squares(self) -> None:
+    def reinitialize_threatenings(self) -> None:
         for piece in self.active_pieces:
             possible_piece_moves = self.get_possible_moves(piece)
             print(f"{piece.name}: possible: {possible_piece_moves}")
@@ -645,4 +645,4 @@ class Board:
         to_square.update_square()
 
         self.last_moves.append((from_square, to_square))
-        self.analyse_threatened_squares()
+        self.reinitialize_threatenings()
