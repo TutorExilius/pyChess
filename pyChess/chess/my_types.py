@@ -1,4 +1,4 @@
-from typing import List, Set, Tuple
+from typing import List, Set, Optional, Tuple
 from copy import deepcopy
 
 # from PyQt5.QtCore import pyqtSignal, QObject
@@ -202,11 +202,18 @@ class Square:
             self.ui_callback(new_text)
 
 
+class Player:
+    def __init__(self, name):
+        self.name = name
+        self.display_name: Optional[str] = None
+        self.pieces: List[Piece] = []
+
+
 class Board:
     def __init__(self):
         w, h = 8, 8
         self._board = [[Square(position=(i, j)) for j in range(w)] for i in range(h)]
-        self.active_pieces: List[Piece] = []
+        self.player: List[Player] = []
         self.last_moves: List[Tuple[Square, Square]] = []
 
         black_pieces = [
@@ -247,17 +254,21 @@ class Board:
             Piece(symbol="♖", name="♖_2_white", position=(7, 7)),
         ]
 
+        # black pieces for player BLACK
+        self.player.append(Player("BLACK"))
         for i in range(2):
             for j in range(8):
                 piece = black_pieces[i * 8 + j]
                 self._board[i][j].piece = piece
-                self.active_pieces.append(piece)
+                self.player[0].pieces.append(piece)
 
+        # black pieces for player WHITE
+        self.player.append(Player("WHITE"))
         for i in range(2):
             for j in range(8):
                 piece = white_pieces[i * 8 + j]
                 self._board[i + 6][j].piece = piece
-                self.active_pieces.append(piece)
+                self.player[1].pieces.append(piece)
 
         self.reinitialize_threatenings()
 
@@ -277,7 +288,12 @@ class Board:
         return result
 
     def reinitialize_threatenings(self) -> None:
-        for piece in self.active_pieces:
+        for piece in [
+            player_pieces
+            for player in self.player
+            for player_pieces in player.pieces
+            if not player_pieces.captured
+        ]:
             possible_piece_moves = self.get_possible_moves(piece)
             print(f"{piece.name}: possible: {possible_piece_moves}")
 

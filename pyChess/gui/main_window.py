@@ -86,34 +86,18 @@ class MainWindow(QMainWindow):
         if self.activated_square is None:
             piece = piece_button.square.piece
             possible_moves = logic.get_possible_moves(self.board, piece)
-        piece = piece_button.square.piece
 
             if not possible_moves:
                 return
-        if piece is None or (
-            self.activated_square is not None and self.activated_square.piece == piece
-        ):
-            if self.activated_square is not None and piece is None:
-                activated_piece = self.activated_square.piece
-                possible_moves = logic.get_possible_moves(self.board, activated_piece)
-
-                if piece_button.square.position in possible_moves:
-                    self.move_piece(
-                        self.activated_square.position, piece_button.square.position
-                    )
-            return
 
             # no square focused yet
-        if self.activated_square is None or self.activated_square.piece != piece:
-            self.reset_highlights()
             self.activated_square = piece_button.square
 
             for i, j in logic.get_possible_moves(self.board, piece_button.square.piece):
-            for i, j in logic.get_possible_moves(self.board, piece):
                 button = self.gridLayout.itemAtPosition(i, j).widget()
                 button.state = States.POSSIBLE_MOVE
 
-            self.update_ui()
+                self.update_ui()
         elif piece_button.square == self.activated_square:
             self.reset_highlights()
             self.activated_square = None
