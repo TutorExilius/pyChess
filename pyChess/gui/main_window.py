@@ -82,8 +82,14 @@ class MainWindow(QMainWindow):
                 button.update_ui()
 
     def on_clicked(self, _, piece_button: QPushButton) -> None:
+        # avoid focusing empty squares and pieces qith no move possibilities
+        if self.activated_square is None:
+            piece = piece_button.square.piece
+            possible_moves = logic.get_possible_moves(self.board, piece)
         piece = piece_button.square.piece
 
+            if not possible_moves:
+                return
         if piece is None or (
             self.activated_square is not None and self.activated_square.piece == piece
         ):
@@ -97,15 +103,30 @@ class MainWindow(QMainWindow):
                     )
             return
 
+            # no square focused yet
         if self.activated_square is None or self.activated_square.piece != piece:
             self.reset_highlights()
             self.activated_square = piece_button.square
 
+            for i, j in logic.get_possible_moves(self.board, piece_button.square.piece):
             for i, j in logic.get_possible_moves(self.board, piece):
                 button = self.gridLayout.itemAtPosition(i, j).widget()
                 button.state = States.POSSIBLE_MOVE
 
             self.update_ui()
+        elif piece_button.square == self.activated_square:
+            self.reset_highlights()
+            self.activated_square = None
+        else:
+            possible_moves = logic.get_possible_moves(
+                self.board, self.activated_square.piece
+            )
+
+            if piece_button.square.position in possible_moves:
+                self.move_piece(
+                    self.activated_square.position, piece_button.square.position
+                )
+                self.activated_square = None
 
     def initialize_new_board(self) -> None:
         def set_button_text(button, button_text):

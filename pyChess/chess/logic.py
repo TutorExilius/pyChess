@@ -32,6 +32,9 @@ def get_piece(board: Board, i: int, j: int) -> Piece:
 
 
 def get_possible_moves(board: Board, piece: Piece) -> List[Tuple[int, int]]:
+    if piece is None:
+        return []
+
     possible_moves = board.get_possible_moves(piece)
     king_in_check_positions: List[Tuple[int, int]] = []
 
