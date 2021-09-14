@@ -654,6 +654,10 @@ class Board:
         self.remove_threat_from_squares()
 
         from_piece.position = to_pos
+
+        if to_square.piece is not None:
+            to_square.piece.captured = True
+
         to_square.piece = from_piece
         from_square.piece = None
 

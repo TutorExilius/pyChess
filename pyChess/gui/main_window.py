@@ -81,6 +81,15 @@ class MainWindow(QMainWindow):
 
                 button.update_ui()
 
+        self.listWidget_black.clear()
+        self.listWidget_white.clear()
+
+        for piece in logic.get_captured_pieces(self.board, "BLACK"):
+            self.listWidget_black.addItem(piece.symbol)
+
+        for piece in logic.get_captured_pieces(self.board, "WHITE"):
+            self.listWidget_white.addItem(piece.symbol)
+
     def on_clicked(self, _, piece_button: QPushButton) -> None:
         # avoid focusing empty squares and pieces qith no move possibilities
         if self.activated_square is None:

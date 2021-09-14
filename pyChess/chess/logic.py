@@ -31,6 +31,13 @@ def get_piece(board: Board, i: int, j: int) -> Piece:
     return board.get_piece(i, j)
 
 
+def get_captured_pieces(board: Board, player_color: str) -> List[Piece]:
+    if player_color == "BLACK":
+        return [piece for piece in board.player[0].pieces if piece.captured]
+    else:
+        return [piece for piece in board.player[1].pieces if piece.captured]
+
+
 def get_possible_moves(board: Board, piece: Piece) -> List[Tuple[int, int]]:
     if piece is None:
         return []
