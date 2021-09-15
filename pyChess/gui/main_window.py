@@ -4,8 +4,8 @@ from pathlib import Path
 from typing import Tuple
 
 from PyQt5 import uic
-from PyQt5.QtCore import QCoreApplication, QTimer
-from PyQt5.QtWidgets import QMainWindow, QPushButton
+from PyQt5.QtCore import QCoreApplication, QTimer, Qt
+from PyQt5.QtWidgets import QMainWindow, QPushButton, QLabel
 
 from pyChess.chess import logic
 from pyChess.chess.my_types import Board
@@ -62,36 +62,35 @@ class MainWindow(QMainWindow):
             time.sleep(interval_in_sec)
 
     def reset_highlights(self) -> None:
-        for i in range(8):
-            for j in range(8):
-                button = self.gridLayout.itemAtPosition(i, j).widget()
+        for i in range(1, 9):
+            for j in range(1, 9):
+                button = self.gridLayout_board.itemAtPosition(i, j).widget()
                 button.state = States.NORMAL
 
         self.activated_square = None
         self.update_ui()
 
     def update_ui(self) -> None:
-        for i in range(8):
-            for j in range(8):
-                button = self.gridLayout.itemAtPosition(i, j).widget()
-                piece = logic.get_piece(self.board, i, j)
+        for i in range(1, 9):
+            for j in range(1, 9):
+                button = self.gridLayout_board.itemAtPosition(i, j).widget()
+                piece = logic.get_piece(self.board, i - 1, j - 1)
                 if piece is not None:
                     button.piece = piece
                     button.setText(button.piece.symbol)
 
                 button.update_ui()
 
-        self.listWidget_black.clear()
-        self.listWidget_white.clear()
+        for i, piece in enumerate(logic.get_captured_pieces(self.board, "BLACK")):
+            label = self.gridLayout_black.itemAtPosition(i, 0).widget()
+            label.setText(piece.symbol)
 
-        for piece in logic.get_captured_pieces(self.board, "BLACK"):
-            self.listWidget_black.addItem(piece.symbol)
-
-        for piece in logic.get_captured_pieces(self.board, "WHITE"):
-            self.listWidget_white.addItem(piece.symbol)
+        for i, piece in enumerate(logic.get_captured_pieces(self.board, "WHITE")):
+            label = self.gridLayout_white.itemAtPosition(i, 0).widget()
+            label.setText(piece.symbol)
 
     def on_clicked(self, _, piece_button: QPushButton) -> None:
-        # avoid focusing empty squares and pieces qith no move possibilities
+        # avoid focusing empty squares and pieces with no move possibilities
         if self.activated_square is None:
             piece = piece_button.square.piece
             possible_moves = logic.get_possible_moves(self.board, piece)
@@ -103,7 +102,7 @@ class MainWindow(QMainWindow):
             self.activated_square = piece_button.square
 
             for i, j in logic.get_possible_moves(self.board, piece_button.square.piece):
-                button = self.gridLayout.itemAtPosition(i, j).widget()
+                button = self.gridLayout_board.itemAtPosition(i + 1, j + 1).widget()
                 button.state = States.POSSIBLE_MOVE
 
                 self.update_ui()
@@ -122,25 +121,117 @@ class MainWindow(QMainWindow):
                 self.activated_square = None
 
     def initialize_new_board(self) -> None:
+        for i in reversed(range(self.gridLayout_black.count())):
+            self.gridLayout_black.itemAt(i).widget().setParent(None)
+
+        for i in reversed(range(self.gridLayout_white.count())):
+            self.gridLayout_white.itemAt(i).widget().setParent(None)
+
+        for _ in range(15):
+            label_1 = QLabel()
+            label_1.setStyleSheet("font-size: 30px;")
+            label_1.setAlignment(Qt.AlignCenter)
+
+            label_2 = QLabel()
+            label_2.setStyleSheet("font-size: 30px;")
+            label_2.setAlignment(Qt.AlignCenter)
+
+            self.gridLayout_black.addWidget(label_1)
+            self.gridLayout_white.addWidget(label_2)
+
         def set_button_text(button, button_text):
             button.setText(button_text)
 
         if self.board is None:
             self.board = Board()
 
-        for i in range(8):
-            for j in range(8):
-                white = (i + j) % 2 == 0
+        FACTOR = 60
+        SIZE = f"width: {FACTOR}px; height: {FACTOR}px;"
 
-                factor = 60
-                size = f"width: {factor}px; height: {factor}px;"
+        # corner
+        label_1 = QLabel()
+        label_2 = QLabel()
+        label_3 = QLabel()
+        label_4 = QLabel()
+        style = (
+            f"width: {FACTOR / 2}px; height: {FACTOR / 2}px;"
+            "background: #444; color: white;"
+        )
+        label_1.setStyleSheet(style)
+        label_2.setStyleSheet(style)
+        label_3.setStyleSheet(style)
+        label_4.setStyleSheet(style)
+
+        self.gridLayout_board.addWidget(label_1, 0, 0)
+        self.gridLayout_board.addWidget(label_2, 0, 10)
+        self.gridLayout_board.addWidget(label_3, 10, 0)
+        self.gridLayout_board.addWidget(label_4, 10, 10)
+
+        # set frame labels
+        # top & bottom frames
+        for j in range(8):
+            text = chr(ord("A") + j)
+
+            label_1 = QLabel()
+            label_1.setStyleSheet(
+                f"width: {FACTOR}px; height: {FACTOR/2}px;"
+                "font-size: 16px; font-weight: bold; padding: 5px 0px 5px;"
+                # "border: 1px solid #999;"
+                "background: #444; color: white;"
+            )
+            label_1.setAlignment(Qt.AlignCenter)
+            label_1.setText(text)
+
+            label_2 = QLabel()
+            label_2.setStyleSheet(
+                f"width: {FACTOR}px; height: {FACTOR/2}px;"
+                "font-size: 16px; font-weight: bold; padding: 5px 0px 5px;"
+                # "border: 1px solid #999;"
+                "background: #444; color: white;"
+            )
+            label_2.setAlignment(Qt.AlignCenter)
+            label_2.setText(text)
+
+            self.gridLayout_board.addWidget(label_1, 0, j + 1)
+            self.gridLayout_board.addWidget(label_2, 10, j + 1)
+
+        # left & right frames
+        for i in range(8):
+            text = str(9 - (i + 1))
+
+            label_1 = QLabel()
+            label_1.setStyleSheet(
+                f"width: {FACTOR/2}px; height: {FACTOR}px;"
+                "font-size: 16px; font-weight: bold; padding: 0px 12px 0px 12px;"
+                # "border: 1px solid #999;"
+                "background: #444; color: white;"
+            )
+            label_1.setAlignment(Qt.AlignCenter)
+            label_1.setText(text)
+
+            label_2 = QLabel()
+            label_2.setStyleSheet(
+                f"width: {FACTOR/2}px; height: {FACTOR}px;"
+                "font-size: 16px; font-weight: bold; padding: 0px 12px 0px 12px;"
+                # "border: 1px solid #999;"
+                "background: #444; color: white;"
+            )
+            label_2.setAlignment(Qt.AlignCenter)
+            label_2.setText(text)
+
+            self.gridLayout_board.addWidget(label_1, i + 1, 0)
+            self.gridLayout_board.addWidget(label_2, i + 1, 10)
+
+        for i in range(1, 9):
+            for j in range(1, 9):
+                white = (i - 1 + j - 1) % 2 == 0
 
                 button = WhiteButton() if white else BlackButton()
-                button.setStyleSheet(f"{size} font-size: {factor / 2}pt;")
+                button.setStyleSheet(f"{SIZE} font-size: {FACTOR / 2}pt;")
 
-                self.gridLayout.addWidget(button, i, j)
+                self.gridLayout_board.addWidget(button, i, j)
 
-                square = logic.get_square(self.board, i, j)
+                square = logic.get_square(self.board, i - 1, j - 1)
                 button.square = square
 
                 square.ui_callback = partial(set_button_text, button)
@@ -148,9 +239,6 @@ class MainWindow(QMainWindow):
 
         self.update_ui()
         self.setFixedSize(self.sizeHint())
-
-    def reset_board(self) -> None:
-        self.board = Board()
 
     def move_piece(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> None:
         logic.move(self.board, from_pos, to_pos)
