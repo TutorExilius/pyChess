@@ -146,7 +146,7 @@ class MainWindow(QMainWindow):
             self.board = Board()
 
         FACTOR = 60
-        SIZE = f"width: {FACTOR}px; height: {FACTOR}px;"
+        SIZE = f"width: {FACTOR + 10}px; height: {FACTOR + 10}px;"
 
         # corner
         label_1 = QLabel()
