@@ -5,7 +5,7 @@ from typing import Tuple
 
 from PyQt5 import uic
 from PyQt5.QtCore import QCoreApplication, QTimer, Qt
-from PyQt5.QtWidgets import QMainWindow, QPushButton, QLabel
+from PyQt5.QtWidgets import QMainWindow, QPushButton, QLabel, QLayout
 
 from pyChess.chess import logic
 from pyChess.chess.my_types import Board
@@ -18,14 +18,22 @@ class MainWindow(QMainWindow):
 
         uic.loadUi(Path(__file__).parent / "ui" / "main_window.ui", self)
 
-        self.board = Board()
+        self.board = None
+
         self.initialize_new_board()
-        self.update_ui()
+
         self.activated_square = None
 
         s = 3000
         print(f"Start Simulation in {s / 1000} seconds...")
         QTimer.singleShot(s, partial(self.on_simulation_start, 0))
+
+    @staticmethod
+    def _clearlayout(layout: QLayout) -> None:
+        for i in reversed(range(layout.count())):
+            item = layout.itemAt(i)
+            layout.removeItem(item)
+            item.widget().deleteLater()
 
     def on_simulation_start(self, interval_in_sec: int) -> None:
         # Debug only ---
@@ -60,6 +68,8 @@ class MainWindow(QMainWindow):
 
             QCoreApplication.processEvents()
             time.sleep(interval_in_sec)
+
+        # self.initialize_new_board()
 
     def reset_highlights(self) -> None:
         for i in range(1, 9):
@@ -121,11 +131,17 @@ class MainWindow(QMainWindow):
                 self.activated_square = None
 
     def initialize_new_board(self) -> None:
-        for i in reversed(range(self.gridLayout_black.count())):
-            self.gridLayout_black.itemAt(i).widget().setParent(None)
+        if self.board is not None:
+            del self.board
+        self.board = Board()
 
-        for i in reversed(range(self.gridLayout_white.count())):
-            self.gridLayout_white.itemAt(i).widget().setParent(None)
+        # --- reset states
+        MainWindow._clearlayout(self.gridLayout_black)
+        MainWindow._clearlayout(self.gridLayout_white)
+        MainWindow._clearlayout(self.gridLayout_board)
+
+        self.activated_square = None
+        # ---
 
         for _ in range(15):
             label_1 = QLabel()
@@ -142,9 +158,6 @@ class MainWindow(QMainWindow):
         def set_button_text(button, button_text):
             button.setText(button_text)
 
-        if self.board is None:
-            self.board = Board()
-
         FACTOR = 60
         SIZE = f"width: {FACTOR + 10}px; height: {FACTOR + 10}px;"
 
@@ -155,7 +168,7 @@ class MainWindow(QMainWindow):
         label_4 = QLabel()
         style = (
             f"width: {FACTOR / 2}px; height: {FACTOR / 2}px;"
-            "background: #444; color: white;"
+            "background: #777; color: white;"
         )
         label_1.setStyleSheet(style)
         label_2.setStyleSheet(style)
@@ -177,7 +190,7 @@ class MainWindow(QMainWindow):
                 f"width: {FACTOR}px; height: {FACTOR/2}px;"
                 "font-size: 16px; font-weight: bold; padding: 5px 0px 5px;"
                 # "border: 1px solid #999;"
-                "background: #444; color: white;"
+                "background: #777; color: white;"
             )
             label_1.setAlignment(Qt.AlignCenter)
             label_1.setText(text)
@@ -187,7 +200,7 @@ class MainWindow(QMainWindow):
                 f"width: {FACTOR}px; height: {FACTOR/2}px;"
                 "font-size: 16px; font-weight: bold; padding: 5px 0px 5px;"
                 # "border: 1px solid #999;"
-                "background: #444; color: white;"
+                "background: #777; color: white;"
             )
             label_2.setAlignment(Qt.AlignCenter)
             label_2.setText(text)
@@ -204,7 +217,7 @@ class MainWindow(QMainWindow):
                 f"width: {FACTOR/2}px; height: {FACTOR}px;"
                 "font-size: 16px; font-weight: bold; padding: 0px 12px 0px 12px;"
                 # "border: 1px solid #999;"
-                "background: #444; color: white;"
+                "background: #777; color: white;"
             )
             label_1.setAlignment(Qt.AlignCenter)
             label_1.setText(text)
@@ -214,7 +227,7 @@ class MainWindow(QMainWindow):
                 f"width: {FACTOR/2}px; height: {FACTOR}px;"
                 "font-size: 16px; font-weight: bold; padding: 0px 12px 0px 12px;"
                 # "border: 1px solid #999;"
-                "background: #444; color: white;"
+                "background: #777; color: white;"
             )
             label_2.setAlignment(Qt.AlignCenter)
             label_2.setText(text)
@@ -237,7 +250,7 @@ class MainWindow(QMainWindow):
                 square.ui_callback = partial(set_button_text, button)
                 button.clicked.connect(partial(self.on_clicked, False, button))
 
-        self.update_ui()
+        self.reset_highlights()
         self.setFixedSize(self.sizeHint())
 
     def move_piece(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> None:

@@ -17,7 +17,10 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>pyChess</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background-color: white;</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0">
@@ -37,7 +40,7 @@
      <number>0</number>
     </property>
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_3">
+     <layout class="QVBoxLayout" name="verticalLayout_3">
       <property name="spacing">
        <number>0</number>
       </property>
@@ -49,6 +52,9 @@
       </property>
       <item>
        <widget class="QFrame" name="frame">
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
         <property name="frameShape">
          <enum>QFrame::StyledPanel</enum>
         </property>
@@ -58,6 +64,27 @@
         <layout class="QHBoxLayout" name="horizontalLayout">
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_7">
+           <item>
+            <widget class="QLabel" name="label_playingtime">
+             <property name="font">
+              <font>
+               <family>Consolas</family>
+               <pointsize>16</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">color: blue; padding-top: 6px; padding-bottom: 6px;</string>
+             </property>
+             <property name="text">
+              <string>TextLabel</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
            <item>
             <spacer name="verticalSpacer_4">
              <property name="orientation">
@@ -75,7 +102,7 @@
             </spacer>
            </item>
            <item>
-            <widget class="QLabel" name="label_playername_white">
+            <widget class="QLabel" name="label_playername_black">
              <property name="font">
               <font>
                <pointsize>14</pointsize>
@@ -269,7 +296,7 @@
             </spacer>
            </item>
            <item>
-            <widget class="QLabel" name="labe_lplayername_black">
+            <widget class="QLabel" name="label_playername_white">
              <property name="font">
               <font>
                <pointsize>14</pointsize>
