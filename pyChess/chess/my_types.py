@@ -1,6 +1,8 @@
 from typing import List, Set, Optional, Tuple
 from copy import deepcopy
 
+from pyChess.chess import logic
+
 # from PyQt5.QtCore import pyqtSignal, QObject
 
 
@@ -149,7 +151,7 @@ class Piece:
         if figure in ["♚", "♔"]:
             moves = []
 
-            if figure == "♚":
+            if figure == "♚":  # black
                 base_pos = (0, 4)
                 if (self_i, self_j) == base_pos:  # castling
                     basic_moves.append((0, 0))
@@ -510,44 +512,14 @@ class Board:
         elif attacker_piece.symbol in ["♚", "♔"]:
             is_castling_move = abs(attacker_piece_j - threatened_square_j) > 1
 
-            if is_castling_move:  # collision check for castling
-                # threatened_square has friendly rook to castling with
-                if (
-                    threatened_square.piece is None
-                    or threatened_square.piece.get_color() != attacker_piece.get_color()
-                    or threatened_square.piece.moved_least_once
-                    or attacker_piece.moved_least_once
-                ):
-                    return False
-
-                to_left = attacker_piece_j > threatened_square_j
-                _range = (
-                    range(attacker_piece_j - 1, threatened_square_j, -1)
-                    if to_left
-                    else range(attacker_piece_j + 1, threatened_square_j)
+            if is_castling_move:
+                return logic.castling_move_accepted(
+                    self, attacker_piece, threatened_square
                 )
-
-                # check traversing squares
-                for j in _range:
-                    crossing_square = self.get_square(attacker_piece_i, j)
-                    _threatened_by_enemy = self.threatened_by_enemy(
-                        crossing_square, attacker_piece
-                    )
-
-                    if _threatened_by_enemy or crossing_square.piece is not None:
-                        return False
-
-                return True
             else:  # normal move
-                if threatened_square.piece is not None and (
-                    threatened_square.piece.get_color() == attacker_piece.get_color()
-                ):
-                    return False
-
-                if self.threatened_by_enemy(threatened_square, attacker_piece):
-                    return False
-
-                return True
+                return threatened_square.piece is None or (
+                    threatened_square.piece.get_color() != attacker_piece.get_color()
+                )
         elif attacker_piece.symbol in ["♟", "♙"]:
             is_diagonal = attacker_piece_j != threatened_square_j
 
@@ -666,3 +638,6 @@ class Board:
 
         self.last_moves.append((from_square, to_square))
         self.reinitialize_threatenings()
+
+    def castling_move(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> None:
+        print("Rochade ausführen")

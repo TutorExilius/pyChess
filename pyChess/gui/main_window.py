@@ -38,8 +38,8 @@ class MainWindow(QMainWindow):
     def on_simulation_start(self, interval_in_sec: int) -> None:
         # Debug only ---
         moves = [
-            ((1, 3), (2, 3)),
             ((7, 7), (5, 7)),
+            ((1, 3), (2, 3)),
             ((6, 5), (5, 5)),
             ((7, 1), (5, 1)),
             ((7, 2), (5, 2)),
