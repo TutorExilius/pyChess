@@ -90,6 +90,9 @@ def move(board: Board, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> No
 def castling_move_accepted(
     board: Board, attacker_piece: Piece, threatened_square: Square
 ) -> bool:
+    if board.is_king_in_check(attacker_piece):
+        return False
+
     if threatened_square.piece is None:
         return False
 

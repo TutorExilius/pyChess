@@ -1,5 +1,6 @@
 from typing import List, Set, Optional, Tuple
 from copy import deepcopy
+from enum import Enum
 
 from pyChess.chess import logic
 
@@ -230,7 +231,7 @@ class Board:
             Piece(symbol="♞", name="♞_1_black", position=(0, 1)),
             Piece(symbol="♝", name="♝_1_black", position=(0, 2)),
             Piece(symbol="♛", name="♛_1_black", position=(0, 3)),
-            Piece(symbol="♚", name="♚_1_black", position=(0, 4)),
+            self.king_black_piece,
             Piece(symbol="♝", name="♝_2_black", position=(0, 5)),
             Piece(symbol="♞", name="♞_2_black", position=(0, 6)),
             Piece(symbol="♜", name="♜_2_black", position=(0, 7)),
@@ -257,7 +258,7 @@ class Board:
             Piece(symbol="♘", name="♘_1_white", position=(7, 1)),
             Piece(symbol="♗", name="♗_1_white", position=(7, 2)),
             Piece(symbol="♕", name="♕_1_white", position=(7, 3)),
-            Piece(symbol="♔", name="♔_1_white", position=(7, 4)),
+            self.king_white_piece,
             Piece(symbol="♗", name="♗_2_white", position=(7, 5)),
             Piece(symbol="♘", name="♘_2_white", position=(7, 6)),
             Piece(symbol="♖", name="♖_2_white", position=(7, 7)),
@@ -296,7 +297,17 @@ class Board:
             setattr(result, k, deepcopy(v, memodict))
         return result
 
+    def is_king_in_check(self, king_piece: Piece) -> bool:
+        return any(
+            [
+                king_in_check.symbol == king_piece.symbol
+                for king_in_check in self.kings_in_check
+            ]
+        )
+
     def reinitialize_threatenings(self) -> None:
+        self.kings_in_check = []
+
         for piece in [
             player_pieces
             for player in self.player
@@ -311,6 +322,17 @@ class Board:
 
                 if not Board.is_pass_only(square, piece):
                     square.threatened_by.add(piece)
+
+        # check kings check states
+
+        king_black_square = self.get_square(*self.king_black_piece.position)
+        king_white_square = self.get_square(*self.king_white_piece.position)
+
+        if self.threatened_by_enemy(king_black_square, self.king_black_piece):
+            self.kings_in_check.append(self.king_black_piece)
+
+        if self.threatened_by_enemy(king_white_square, self.king_white_piece):
+            self.kings_in_check.append(self.king_white_piece)
 
     def remove_threat_from_squares(self) -> None:
         for i in range(0, 8):
@@ -652,4 +674,25 @@ class Board:
         self.reinitialize_threatenings()
 
     def castling_move(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> None:
-        print("Rochade ausführen")
+        from_piece_pos_i, from_piece_pos_j = from_pos
+        to_square_pos_i, to_square_pos_j = to_pos
+
+        to_left = from_piece_pos_j > to_square_pos_j
+
+        if to_left:
+            new_from_piece_pos_j = from_piece_pos_j - 2
+            new_to_square_pos_j = from_piece_pos_j - 1
+        else:
+            new_from_piece_pos_j = from_piece_pos_j + 2
+            new_to_square_pos_j = from_piece_pos_j + 1
+
+        self.move(
+            (from_piece_pos_i, from_piece_pos_j),
+            (from_piece_pos_i, new_from_piece_pos_j),
+            MoveType.CASTLING_MOVE,
+        )
+        self.move(
+            (to_square_pos_i, to_square_pos_j),
+            (to_square_pos_i, new_to_square_pos_j),
+            MoveType.CASTLING_MOVE,
+        )
