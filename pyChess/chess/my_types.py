@@ -3,7 +3,11 @@ from copy import deepcopy
 
 from pyChess.chess import logic
 
-# from PyQt5.QtCore import pyqtSignal, QObject
+
+class MoveType(str, Enum):
+    NORMAL_MOVE = "Move"
+    EN_PASSANT = "En passant"
+    CASTLING_MOVE = "Castling"
 
 
 class Piece:
@@ -216,7 +220,10 @@ class Board:
         w, h = 8, 8
         self._board = [[Square(position=(i, j)) for j in range(w)] for i in range(h)]
         self.player: List[Player] = []
-        self.last_moves: List[Tuple[Square, Square]] = []
+        self.last_moves: List[Tuple[Square, Square, logic.MoveType]] = []
+        self.kings_in_check: List[Piece] = None
+        self.king_black_piece = Piece(symbol="♚", name="♚_1_black", position=(0, 4))
+        self.king_white_piece = Piece(symbol="♔", name="♔_1_white", position=(7, 4))
 
         black_pieces = [
             Piece(symbol="♜", name="♜_1_black", position=(0, 0)),
@@ -534,7 +541,7 @@ class Board:
                     if not self.last_moves:
                         return False
 
-                    last_from_square, last_to_square = self.last_moves[-1]
+                    last_from_square, last_to_square, _ = self.last_moves[-1]
                     last_move_piece = last_to_square.piece
 
                     was_to_step_opening = (
@@ -615,7 +622,12 @@ class Board:
 
         return collision_free_moves
 
-    def move(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> None:
+    def move(
+        self,
+        from_pos: Tuple[int, int],
+        to_pos: Tuple[int, int],
+        move_type: MoveType = MoveType.NORMAL_MOVE,
+    ) -> None:
         from_i, from_j = from_pos
         to_i, to_j = to_pos
 
@@ -636,7 +648,7 @@ class Board:
         from_square.update_square()
         to_square.update_square()
 
-        self.last_moves.append((from_square, to_square))
+        self.last_moves.append((from_square, to_square, move_type))
         self.reinitialize_threatenings()
 
     def castling_move(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> None:
