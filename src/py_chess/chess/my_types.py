@@ -1,8 +1,7 @@
-from typing import List, Set, Optional, Tuple
+from __future__ import annotations
+from typing import Callable, List, Set, Optional, Tuple
 from copy import deepcopy
 from enum import Enum
-
-from pyChess.chess import logic
 
 
 class MoveType(str, Enum):
@@ -19,7 +18,7 @@ class Piece:
         self.move_counter: int = 0
         self.captured: bool = False
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.name
 
     @property
@@ -31,7 +30,7 @@ class Piece:
         return self._position
 
     @position.setter
-    def position(self, value: Tuple[int, int]):
+    def position(self, value: Tuple[int, int]) -> None:
         if self._position != value:
             self._position = value
             self.move_counter += 1
@@ -183,14 +182,17 @@ class Piece:
 
 class Square:
     def __init__(
-        self, position: Tuple[int, int], piece: Piece = None, ui_callback=None
+        self,
+        position: Tuple[int, int],
+        piece: Piece = None,
+        ui_callback: Callable = None,
     ):
         self.ui_callback = ui_callback
         self.position = position
         self.piece = piece
         self.threatened_by: Set[Piece] = set()
 
-    def __deepcopy__(self, memodict={}):
+    def __deepcopy__(self, memodict: dict = {}) -> Square:
         cls = self.__class__
         result = cls.__new__(cls)
         memodict[id(self)] = result
@@ -210,19 +212,19 @@ class Square:
 
 
 class Player:
-    def __init__(self, name):
+    def __init__(self, name: str):
         self.name = name
         self.display_name: Optional[str] = None
         self.pieces: List[Piece] = []
 
 
 class Board:
-    def __init__(self):
+    def __init__(self) -> None:
         w, h = 8, 8
         self._board = [[Square(position=(i, j)) for j in range(w)] for i in range(h)]
         self.player: List[Player] = []
-        self.last_moves: List[Tuple[Square, Square, logic.MoveType]] = []
-        self.kings_in_check: List[Piece] = None
+        self.last_moves: List[Tuple[Square, Square, MoveType]] = []
+        self.kings_in_check: Optional[List[Piece]] = None
         self.king_black_piece = Piece(symbol="♚", name="♚_1_black", position=(0, 4))
         self.king_white_piece = Piece(symbol="♔", name="♔_1_white", position=(7, 4))
 
@@ -289,7 +291,7 @@ class Board:
 
         return False
 
-    def __deepcopy__(self, memodict={}):
+    def __deepcopy__(self, memodict: dict = {}) -> Board:
         cls = self.__class__
         result = cls.__new__(cls)
         memodict[id(self)] = result
@@ -298,6 +300,9 @@ class Board:
         return result
 
     def is_king_in_check(self, king_piece: Piece) -> bool:
+        if self.kings_in_check is None:
+            return False
+
         return any(
             [
                 king_in_check.symbol == king_piece.symbol
@@ -342,12 +347,12 @@ class Board:
 
     def _is_diagonal_move_collision_free(
         self,
-        attacker_piece_i,
-        attacker_piece_j,
-        threatened_square_i,
-        threatened_square_j,
-        attacker_piece,
-    ):
+        attacker_piece_i: int,
+        attacker_piece_j: int,
+        threatened_square_i: int,
+        threatened_square_j: int,
+        attacker_piece: Piece,
+    ) -> bool:
         # top
         if threatened_square_i < attacker_piece_i:
             # left
@@ -436,12 +441,12 @@ class Board:
 
     def _is_straight_move_collision_free(
         self,
-        attacker_piece_i,
-        attacker_piece_j,
-        threatened_square_i,
-        threatened_square_j,
-        attacker_piece,
-    ):
+        attacker_piece_i: int,
+        attacker_piece_j: int,
+        threatened_square_i: int,
+        threatened_square_j: int,
+        attacker_piece: Piece,
+    ) -> bool:
         if attacker_piece_i == threatened_square_i:  # horizontal move
             to_left = attacker_piece_j >= threatened_square_j
             _range = (
@@ -485,6 +490,50 @@ class Board:
                         return False
 
             return True
+
+    def castling_move_accepted(
+        self, attacker_piece: Piece, threatened_square: Square
+    ) -> bool:
+        if self.is_king_in_check(attacker_piece):
+            return False
+
+        if threatened_square.piece is None:
+            return False
+
+        attacker_piece_i, attacker_piece_j = attacker_piece.position
+        threatened_square_i, threatened_square_j = threatened_square.piece.position
+
+        # threatened_square has friendly rook to castling with
+        if (
+            threatened_square.piece.get_color() != attacker_piece.get_color()
+            or threatened_square.piece.moved_least_once
+            or attacker_piece.moved_least_once
+        ):
+            return False
+
+        to_left = attacker_piece_j > threatened_square_j
+        _range = (
+            range(attacker_piece_j - 1, threatened_square_j, -1)
+            if to_left
+            else range(attacker_piece_j + 1, threatened_square_j)
+        )
+
+        # check traversing squares
+        for step, j in enumerate(_range, start=1):
+            crossing_square = self.get_square(attacker_piece_i, j)
+
+            if crossing_square.piece is not None:
+                return False
+
+            if step < 3:
+                _threatened_by_enemy = self.threatened_by_enemy(
+                    crossing_square, attacker_piece
+                )
+
+                if _threatened_by_enemy:
+                    return False
+
+        return True
 
     def is_collision_free_move(
         self, attacker_piece: Piece, threatened_square: Square
@@ -542,9 +591,7 @@ class Board:
             is_castling_move = abs(attacker_piece_j - threatened_square_j) > 1
 
             if is_castling_move:
-                return logic.castling_move_accepted(
-                    self, attacker_piece, threatened_square
-                )
+                return self.castling_move_accepted(attacker_piece, threatened_square)
             else:  # normal move
                 return threatened_square.piece is None or (
                     threatened_square.piece.get_color() != attacker_piece.get_color()
@@ -625,7 +672,7 @@ class Board:
     def get_square(self, i: int, j: int) -> Square:
         return self._board[i][j]
 
-    def get_piece(self, i: int, j: int) -> Piece:
+    def get_piece(self, i: int, j: int) -> Optional[Piece]:
         return self._board[i][j].piece
 
     def get_possible_moves(self, piece: Piece) -> List[Tuple[int, int]]:
@@ -657,6 +704,10 @@ class Board:
         to_square = self._board[to_i][to_j]
 
         from_piece = from_square.piece
+
+        if from_piece is None:
+            return
+
         self.remove_threat_from_squares()
 
         from_piece.position = to_pos

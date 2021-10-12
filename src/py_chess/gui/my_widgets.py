@@ -13,18 +13,18 @@ class States(Enum):
 
 
 class BaseButton(QPushButton):
-    def __init__(self):
+    def __init__(self) -> None:
         super(BaseButton, self).__init__()
 
         self.state = States.NORMAL
         self._state_before = self.state
         self.square = None
         self.activated = False
-        self.default_style_color = None
-        self.last_move_style_color = None
-        self.possible_move_style_color = None
-        self.check_style_color = None
-        self.checkmate_style_color = None
+        self.default_style_color = ""
+        self.last_move_style_color = ""
+        self.possible_move_style_color = ""
+        self.check_style_color = ""
+        self.checkmate_style_color = ""
 
     def get_color(self, state: States) -> str:
         if state == States.NORMAL:
@@ -56,7 +56,7 @@ class BaseButton(QPushButton):
 
 
 class BlackButton(BaseButton):
-    def __init__(self):
+    def __init__(self) -> None:
         super(BlackButton, self).__init__()
 
         self.default_style_color = "#cccccc"
@@ -69,7 +69,7 @@ class BlackButton(BaseButton):
 
 
 class WhiteButton(BaseButton):
-    def __init__(self):
+    def __init__(self) -> None:
         super(WhiteButton, self).__init__()
 
         self.default_style_color = "#ffffff"

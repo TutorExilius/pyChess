@@ -2,10 +2,10 @@ import sys
 
 from PyQt5.QtWidgets import QApplication
 
-from pyChess.gui.main_window import MainWindow
+from gui.main_window import MainWindow
 
 
-def main():
+def main() -> int:
     app = QApplication([])
 
     main_window = MainWindow()

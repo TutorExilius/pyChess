@@ -7,13 +7,13 @@ from PyQt5 import uic
 from PyQt5.QtCore import QCoreApplication, QTimer, Qt
 from PyQt5.QtWidgets import QMainWindow, QPushButton, QLabel, QLayout
 
-from pyChess.chess import logic
-from pyChess.chess.my_types import Board
-from pyChess.gui.my_widgets import BlackButton, States, WhiteButton
+from chess import logic
+from chess.my_types import Board
+from gui.my_widgets import BlackButton, States, WhiteButton
 
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self) -> None:
         super(MainWindow, self).__init__()
 
         uic.loadUi(Path(__file__).parent / "ui" / "main_window.ui", self)
@@ -99,7 +99,7 @@ class MainWindow(QMainWindow):
             label = self.gridLayout_white.itemAtPosition(i, 0).widget()
             label.setText(piece.symbol)
 
-    def on_clicked(self, _, piece_button: QPushButton) -> None:
+    def on_clicked(self, _: bool, piece_button: QPushButton) -> None:
         # avoid focusing empty squares and pieces with no move possibilities
         if self.activated_square is None:
             piece = piece_button.square.piece
@@ -155,7 +155,7 @@ class MainWindow(QMainWindow):
             self.gridLayout_black.addWidget(label_1)
             self.gridLayout_white.addWidget(label_2)
 
-        def set_button_text(button, button_text):
+        def set_button_text(button: QPushButton, button_text: str) -> None:
             button.setText(button_text)
 
         FACTOR = 60

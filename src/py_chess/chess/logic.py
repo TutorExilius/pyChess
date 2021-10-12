@@ -1,8 +1,8 @@
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from copy import deepcopy
 
-from pyChess.chess.my_types import Board, Square, Piece
+from chess.my_types import Board, Square, Piece
 
 
 def reinitialize_threatenings(board: Board) -> None:
@@ -27,7 +27,7 @@ def get_square(board: Board, i: int, j: int) -> Square:
     return board.get_square(i, j)
 
 
-def get_piece(board: Board, i: int, j: int) -> Piece:
+def get_piece(board: Board, i: int, j: int) -> Optional[Piece]:
     return board.get_piece(i, j)
 
 
@@ -75,58 +75,16 @@ def move(board: Board, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> No
     attacker_piece = board.get_piece(attacker_piece_i, attacker_piece_j)
     threatened_square = board.get_square(threatened_square_i, threatened_square_j)
 
+    if attacker_piece is None:
+        return
+
     if attacker_piece.symbol in ["♔", "♚"]:
         is_castling_move = abs(attacker_piece_j - threatened_square_j) > 1
 
         if is_castling_move:
-            if castling_move_accepted(board, attacker_piece, threatened_square):
+            if board.castling_move_accepted(attacker_piece, threatened_square):
                 board.castling_move(from_pos, to_pos)
         else:  # normal move
             board.move(from_pos, to_pos)
     else:
         board.move(from_pos, to_pos)
-
-
-def castling_move_accepted(
-    board: Board, attacker_piece: Piece, threatened_square: Square
-) -> bool:
-    if board.is_king_in_check(attacker_piece):
-        return False
-
-    if threatened_square.piece is None:
-        return False
-
-    attacker_piece_i, attacker_piece_j = attacker_piece.position
-    threatened_square_i, threatened_square_j = threatened_square.piece.position
-
-    # threatened_square has friendly rook to castling with
-    if (
-        threatened_square.piece.get_color() != attacker_piece.get_color()
-        or threatened_square.piece.moved_least_once
-        or attacker_piece.moved_least_once
-    ):
-        return False
-
-    to_left = attacker_piece_j > threatened_square_j
-    _range = (
-        range(attacker_piece_j - 1, threatened_square_j, -1)
-        if to_left
-        else range(attacker_piece_j + 1, threatened_square_j)
-    )
-
-    # check traversing squares
-    for step, j in enumerate(_range, start=1):
-        crossing_square = board.get_square(attacker_piece_i, j)
-
-        if crossing_square.piece is not None:
-            return False
-
-        if step < 3:
-            _threatened_by_enemy = board.threatened_by_enemy(
-                crossing_square, attacker_piece
-            )
-
-            if _threatened_by_enemy:
-                return False
-
-    return True
