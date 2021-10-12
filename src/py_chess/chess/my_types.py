@@ -613,7 +613,7 @@ class Board:
                     last_from_square, last_to_square, _ = self.last_moves[-1]
                     last_move_piece = last_to_square.piece
 
-                    was_to_step_opening = (
+                    was_two_step_opening = (
                         abs(last_from_square.position[0] - last_to_square.position[0])
                         == 2
                     )
@@ -634,7 +634,7 @@ class Board:
 
                     if (
                         is_last_pawn_enemy_move
-                        and was_to_step_opening
+                        and was_two_step_opening
                         and next_to_attacker
                         and behind_to_last_move_piece
                     ):
@@ -706,7 +706,7 @@ class Board:
         from_piece = from_square.piece
 
         if from_piece is None:
-            return
+            raise ValueError("Moving piece is None")
 
         self.remove_threat_from_squares()
 
@@ -747,3 +747,32 @@ class Board:
             (to_square_pos_i, new_to_square_pos_j),
             MoveType.CASTLING_MOVE,
         )
+
+    def en_passant_move(
+        self, from_pos: Tuple[int, int], to_pos: Tuple[int, int]
+    ) -> None:
+        to_square_pos_i, to_square_pos_j = to_pos
+
+        from_piece = self.get_piece(*from_pos)
+
+        if from_piece is None:
+            raise ValueError("En-Passant-Fail: Moving piece is None.")
+
+        is_black_pawn = from_piece.get_color() == "black"
+
+        if is_black_pawn:
+            capturing_pawn_i = to_square_pos_i - 1
+        else:
+            capturing_pawn_i = to_square_pos_i + 1
+
+        capturing_pawn_piece = self.get_piece(capturing_pawn_i, to_square_pos_j)
+        capturing_square = self.get_square(capturing_pawn_i, to_square_pos_j)
+
+        if capturing_pawn_piece is None:
+            raise ValueError("En-Passant-Fail: Capturing piece is None.")
+
+        capturing_pawn_piece.captured = True
+        capturing_square.piece = None
+        capturing_square.update_square()
+
+        self.move(from_pos, to_pos, MoveType.EN_PASSANT)

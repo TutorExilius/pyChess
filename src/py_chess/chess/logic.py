@@ -86,5 +86,13 @@ def move(board: Board, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> No
                 board.castling_move(from_pos, to_pos)
         else:  # normal move
             board.move(from_pos, to_pos)
+    elif attacker_piece.symbol in ["♟", "♙"]:
+        is_diagonal_move = attacker_piece_j != threatened_square_j
+        is_to_square_free = threatened_square.piece is None
+
+        if is_diagonal_move and is_to_square_free:  # is en passant
+            board.en_passant_move(from_pos, to_pos)
+        else:
+            board.move(from_pos, to_pos)
     else:
         board.move(from_pos, to_pos)
