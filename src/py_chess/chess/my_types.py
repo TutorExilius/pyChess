@@ -782,26 +782,26 @@ class Board:
         self.move(from_pos, to_pos, MoveType.EN_PASSANT)
 
     def open_promotion_piece_dialog(self, piece: Piece) -> None:
-        transormable_black_piece_symbols = {
-            "queen": "♛",
-            "rook": "♜",
-            "bishop": "♝",
-            "knight": "♞",
-        }
-        transormabl_white_piece_symbols = {
-            "queen": "♕",
-            "rook": "♖",
-            "bishop": "♗",
-            "knight": "♘",
-        }
-
-        current_transformable_piece_symbols = (
-            transormable_black_piece_symbols
-            if piece.get_color() == "black"
-            else transormabl_white_piece_symbols
-        )
-
         if self.callback_dialog is not None:
+            transormable_black_piece_symbols = {
+                "queen": "♛",
+                "rook": "♜",
+                "bishop": "♝",
+                "knight": "♞",
+            }
+            transormabl_white_piece_symbols = {
+                "queen": "♕",
+                "rook": "♖",
+                "bishop": "♗",
+                "knight": "♘",
+            }
+
+            current_transformable_piece_symbols = (
+                transormable_black_piece_symbols
+                if piece.get_color() == "black"
+                else transormabl_white_piece_symbols
+            )
+
             result = self.callback_dialog(current_transformable_piece_symbols)
 
             if result is not None:
