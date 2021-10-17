@@ -198,7 +198,7 @@ class Square:
         result = cls.__new__(cls)
         memodict[id(self)] = result
         for k, v in self.__dict__.items():
-            if k == "ui_callback":
+            if k == "callback_dialog":
                 setattr(result, k, None)
             elif k == "threatened_by":
                 setattr(result, k, [])
@@ -298,7 +298,10 @@ class Board:
         result = cls.__new__(cls)
         memodict[id(self)] = result
         for k, v in self.__dict__.items():
-            setattr(result, k, deepcopy(v, memodict))
+            if k == "callback_dialog":
+                setattr(result, k, None)
+            else:
+                setattr(result, k, deepcopy(v, memodict))
         return result
 
     def is_king_in_check(self, king_piece: Piece) -> bool:
