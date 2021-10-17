@@ -94,5 +94,15 @@ def move(board: Board, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> No
             board.en_passant_move(from_pos, to_pos)
         else:
             board.move(from_pos, to_pos)
+
+            is_pawn_black = attacker_piece.get_color() == "black"
+
+            if is_pawn_black:
+                top_i_line = 7
+            else:
+                top_i_line = 0
+
+            if threatened_square_i == top_i_line:  # pawn arrived top line
+                board.open_promotion_piece_dialog(attacker_piece)
     else:
         board.move(from_pos, to_pos)

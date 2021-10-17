@@ -8,6 +8,7 @@ class MoveType(str, Enum):
     NORMAL_MOVE = "Move"
     EN_PASSANT = "En passant"
     CASTLING_MOVE = "Castling"
+    PROMOTION = "Promotion"
 
 
 class Piece:
@@ -185,11 +186,11 @@ class Square:
         self,
         position: Tuple[int, int],
         piece: Piece = None,
-        ui_callback: Callable = None,
+        callback_dialog: Callable = None,
     ):
-        self.ui_callback = ui_callback
         self.position = position
         self.piece = piece
+        self.callback_dialog = callback_dialog
         self.threatened_by: Set[Piece] = set()
 
     def __deepcopy__(self, memodict: dict = {}) -> Square:
@@ -206,9 +207,9 @@ class Square:
         return result
 
     def update_square(self) -> None:
-        if self.ui_callback is not None:
+        if self.callback_dialog is not None:
             new_text = "" if self.piece is None else self.piece.symbol
-            self.ui_callback(new_text)
+            self.callback_dialog(new_text)
 
 
 class Player:
@@ -219,7 +220,8 @@ class Player:
 
 
 class Board:
-    def __init__(self) -> None:
+    def __init__(self, callback_dialog: Callable):
+        self.callback_dialog = callback_dialog
         w, h = 8, 8
         self._board = [[Square(position=(i, j)) for j in range(w)] for i in range(h)]
         self.player: List[Player] = []
@@ -320,7 +322,6 @@ class Board:
             if not player_pieces.captured
         ]:
             possible_piece_moves = self.get_possible_moves(piece)
-            print(f"{piece.name}: possible: {possible_piece_moves}")
 
             for threatened_position in possible_piece_moves:
                 square = self.get_square(*threatened_position)
@@ -776,3 +777,41 @@ class Board:
         capturing_square.update_square()
 
         self.move(from_pos, to_pos, MoveType.EN_PASSANT)
+
+    def open_promotion_piece_dialog(self, piece: Piece) -> None:
+        transormable_black_piece_symbols = {
+            "queen": "♛",
+            "rook": "♜",
+            "bishop": "♝",
+            "knight": "♞",
+        }
+        transormabl_white_piece_symbols = {
+            "queen": "♕",
+            "rook": "♖",
+            "bishop": "♗",
+            "knight": "♘",
+        }
+
+        current_transformable_piece_symbols = (
+            transormable_black_piece_symbols
+            if piece.get_color() == "black"
+            else transormabl_white_piece_symbols
+        )
+
+        if self.callback_dialog is not None:
+            result = self.callback_dialog(current_transformable_piece_symbols)
+
+            if result is not None:
+                self._transform(piece, result)
+                transformed_square = self.get_square(*piece.position)
+                transformed_square.update_square()
+                self.last_moves.append(
+                    (transformed_square, transformed_square, MoveType.PROMOTION)
+                )
+
+    def _transform(
+        self, transforming_piece: Piece, to_transforming_symbol: str
+    ) -> None:
+        to_name = f"{to_transforming_symbol}_T_{transforming_piece.get_color()}"
+        transforming_piece.symbol = to_transforming_symbol
+        transforming_piece.name = to_name

@@ -1,32 +1,30 @@
 import time
 from functools import partial
 from pathlib import Path
-from typing import Tuple
-
-from PyQt5 import uic
-from PyQt5.QtCore import QCoreApplication, QTimer, Qt
-from PyQt5.QtWidgets import QMainWindow, QPushButton, QLabel, QLayout
+from typing import Dict, Tuple
 
 from chess import logic
 from chess.my_types import Board
 from gui.my_widgets import BlackButton, States, WhiteButton
+from gui.promotion_piece_dialog import PromotionPieceDialog
+from PyQt5 import uic
+from PyQt5.QtCore import QCoreApplication, Qt, QTimer
+from PyQt5.QtWidgets import QLabel, QLayout, QMainWindow, QPushButton
 
 
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super(MainWindow, self).__init__()
 
-        uic.loadUi(Path(__file__).parent / "ui" / "main_window.ui", self)
+        self.ui = uic.loadUi(Path(__file__).parent / "ui" / "main_window.ui", self)
 
         self.board = None
-
         self.initialize_new_board()
-
         self.activated_square = None
 
         s = 3000
         print(f"Start Simulation in {s / 1000} seconds...")
-        QTimer.singleShot(s, partial(self.on_simulation_start, 0))
+        QTimer.singleShot(s, partial(self.on_simulation_start, 0.0))
 
     @staticmethod
     def _clearlayout(layout: QLayout) -> None:
@@ -59,6 +57,7 @@ class MainWindow(QMainWindow):
             ((1, 5), (3, 5)),
             # ((2, 1), (3, 1)),
             # ((3, 7), (4, 6)),
+            ((1, 1), (7, 1)),
         ]
 
         for _move in moves:
@@ -131,9 +130,19 @@ class MainWindow(QMainWindow):
                 self.activated_square = None
 
     def initialize_new_board(self) -> None:
+        def callback_dialog(transformable_piece_symbols: Dict[str, str]) -> str:
+            dialog = PromotionPieceDialog(self, transformable_piece_symbols)
+            dialog.exec()
+
+            symbol = PromotionPieceDialog.selected_piece_symbol
+            PromotionPieceDialog.selected_piece_symbol = ""
+
+            return symbol
+
         if self.board is not None:
             del self.board
-        self.board = Board()
+
+        self.board = Board(callback_dialog)
 
         # --- reset states
         MainWindow._clearlayout(self.gridLayout_black)
@@ -187,7 +196,7 @@ class MainWindow(QMainWindow):
 
             label_1 = QLabel()
             label_1.setStyleSheet(
-                f"width: {FACTOR}px; height: {FACTOR/2}px;"
+                f"width: {FACTOR}px; height: {FACTOR / 2}px;"
                 "font-size: 16px; font-weight: bold; padding: 5px 0px 5px;"
                 # "border: 1px solid #999;"
                 "background: #777; color: white;"
@@ -197,7 +206,7 @@ class MainWindow(QMainWindow):
 
             label_2 = QLabel()
             label_2.setStyleSheet(
-                f"width: {FACTOR}px; height: {FACTOR/2}px;"
+                f"width: {FACTOR}px; height: {FACTOR / 2}px;"
                 "font-size: 16px; font-weight: bold; padding: 5px 0px 5px;"
                 # "border: 1px solid #999;"
                 "background: #777; color: white;"
@@ -214,7 +223,7 @@ class MainWindow(QMainWindow):
 
             label_1 = QLabel()
             label_1.setStyleSheet(
-                f"width: {FACTOR/2}px; height: {FACTOR}px;"
+                f"width: {FACTOR / 2}px; height: {FACTOR}px;"
                 "font-size: 16px; font-weight: bold; padding: 0px 12px 0px 12px;"
                 # "border: 1px solid #999;"
                 "background: #777; color: white;"
@@ -224,7 +233,7 @@ class MainWindow(QMainWindow):
 
             label_2 = QLabel()
             label_2.setStyleSheet(
-                f"width: {FACTOR/2}px; height: {FACTOR}px;"
+                f"width: {FACTOR / 2}px; height: {FACTOR}px;"
                 "font-size: 16px; font-weight: bold; padding: 0px 12px 0px 12px;"
                 # "border: 1px solid #999;"
                 "background: #777; color: white;"
@@ -247,7 +256,7 @@ class MainWindow(QMainWindow):
                 square = logic.get_square(self.board, i - 1, j - 1)
                 button.square = square
 
-                square.ui_callback = partial(set_button_text, button)
+                square.callback_dialog = partial(set_button_text, button)
                 button.clicked.connect(partial(self.on_clicked, False, button))
 
         self.reset_highlights()
