@@ -22,6 +22,14 @@ class Piece:
     def __repr__(self) -> str:
         return self.name
 
+    def __deepcopy__(self, memodict: dict = {}) -> Square:
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memodict[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, deepcopy(v, memodict))
+        return result
+
     @property
     def moved_least_once(self) -> bool:
         return self.move_counter > 0
@@ -200,8 +208,6 @@ class Square:
         for k, v in self.__dict__.items():
             if k == "callback_dialog":
                 setattr(result, k, None)
-            elif k == "threatened_by":
-                setattr(result, k, [])
             else:
                 setattr(result, k, deepcopy(v, memodict))
         return result

@@ -60,6 +60,50 @@ def get_possible_moves(board: Board, piece: Piece) -> List[Tuple[int, int]]:
 
                 if cloned_board.threatened_by_enemy(to_square, piece):
                     king_in_check_positions.append(possible_move)
+    else:
+        for possible_move in possible_moves:
+            cloned_board = deepcopy(board)
+
+            color = piece.get_color()
+            king = (
+                cloned_board.king_black_piece
+                if color == "black"
+                else cloned_board.king_white_piece
+            )
+
+            king_threatenings = [
+                threatener_piece.symbol
+                for threatener_piece in cloned_board.get_square(
+                    *king.position
+                ).threatened_by
+                if king.get_color() != threatener_piece.get_color()
+            ]
+
+            king_threatenings.sort()
+
+            cloned_board.move(piece.position, possible_move)
+
+            new_king_threatenings = [
+                threatener_piece.symbol
+                for threatener_piece in cloned_board.get_square(
+                    *king.position
+                ).threatened_by
+                if king.get_color() != threatener_piece.get_color()
+            ]
+
+            new_king_threatenings.sort()
+
+            if king_threatenings != new_king_threatenings and new_king_threatenings:
+                king_in_check_positions.append(possible_move)
+
+        # simulate only one move and check if own king get into check position/state
+        # 1. get current moving color
+        # 2. get current list of threatenings of own king
+        # 3. one move of possible moves
+        # 4. get current list of threatenings of own king
+        # 5. compare the two threatening lists
+        # 5.1 if different & new list >= 1 -> move leads own king in check state
+        # 5.2 is list is equal -> no problemo! :)
 
     return [
         possible_move
