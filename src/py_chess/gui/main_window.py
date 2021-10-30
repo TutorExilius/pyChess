@@ -215,7 +215,7 @@ class MainWindow(QMainWindow):
         # set frame labels
         # top & bottom frames
         for j in range(8):
-            text = chr(ord("A") + j)
+            text = chr(ord("a") + j)
 
             label_1 = QLabel()
             label_1.setStyleSheet(
