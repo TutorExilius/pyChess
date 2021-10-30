@@ -243,6 +243,7 @@ class Board:
         self.king_black_piece = Piece(symbol="♚", name="♚_1_black", position=(0, 4))
         self.king_white_piece = Piece(symbol="♔", name="♔_1_white", position=(7, 4))
         self.next_move_color = "white"
+        self.game_over = False
 
         black_pieces = [
             Piece(symbol="♜", name="♜_1_black", position=(0, 0)),
