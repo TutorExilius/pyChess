@@ -4,6 +4,13 @@ from copy import deepcopy
 from enum import Enum
 
 
+class GameState(str, Enum):
+    CONTINUE = "Continue"
+    CHECKMATE_BLACK = "Checkmate Black King"
+    CHECKMATE_WHITE = "Checkmate white King"
+    REMIS = "Remis"
+
+
 class MoveType(str, Enum):
     NORMAL_MOVE = "Move"
     EN_PASSANT = "En passant"
@@ -232,9 +239,10 @@ class Board:
         self._board = [[Square(position=(i, j)) for j in range(w)] for i in range(h)]
         self.player: List[Player] = []
         self.last_moves: List[Tuple[Square, Square, MoveType]] = []
-        self.kings_in_check: Optional[List[Piece]] = None
+        self.kings_in_check: List[Piece] = []
         self.king_black_piece = Piece(symbol="♚", name="♚_1_black", position=(0, 4))
         self.king_white_piece = Piece(symbol="♔", name="♔_1_white", position=(7, 4))
+        self.next_move_color = "white"
 
         black_pieces = [
             Piece(symbol="♜", name="♜_1_black", position=(0, 0)),
@@ -311,9 +319,6 @@ class Board:
         return result
 
     def is_king_in_check(self, king_piece: Piece) -> bool:
-        if self.kings_in_check is None:
-            return False
-
         return any(
             [
                 king_in_check.symbol == king_piece.symbol
@@ -322,6 +327,7 @@ class Board:
         )
 
     def reinitialize_threatenings(self) -> None:
+        self._remove_threat_from_squares()
         self.kings_in_check = []
 
         for piece in [
@@ -330,7 +336,7 @@ class Board:
             for player_pieces in player.pieces
             if not player_pieces.captured
         ]:
-            possible_piece_moves = self.get_possible_moves(piece)
+            possible_piece_moves = self._get_possible_moves(piece)
 
             for threatened_position in possible_piece_moves:
                 square = self.get_square(*threatened_position)
@@ -349,7 +355,7 @@ class Board:
         if self.threatened_by_enemy(king_white_square, self.king_white_piece):
             self.kings_in_check.append(self.king_white_piece)
 
-    def remove_threat_from_squares(self) -> None:
+    def _remove_threat_from_squares(self) -> None:
         for i in range(0, 8):
             for j in range(0, 8):
                 square = self.get_square(i, j)
@@ -685,7 +691,7 @@ class Board:
     def get_piece(self, i: int, j: int) -> Optional[Piece]:
         return self._board[i][j].piece
 
-    def get_possible_moves(self, piece: Piece) -> List[Tuple[int, int]]:
+    def _get_possible_moves(self, piece: Piece) -> List[Tuple[int, int]]:
         basic_moves = piece.get_basic_moves()
 
         collision_free_moves: List[Tuple[int, int]] = []
@@ -718,8 +724,6 @@ class Board:
         if from_piece is None:
             raise ValueError("Moving piece is None")
 
-        self.remove_threat_from_squares()
-
         from_piece.position = to_pos
 
         if to_square.piece is not None:
@@ -733,6 +737,12 @@ class Board:
 
         self.last_moves.append((from_square, to_square, move_type))
         self.reinitialize_threatenings()
+
+        last_moved_piece = to_square.piece
+        last_moved_color = last_moved_piece.get_color()
+
+        color_state_trigger = {"white": "black", "black": "white"}
+        self.next_move_color = color_state_trigger[last_moved_color]
 
     def castling_move(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> None:
         from_piece_pos_i, from_piece_pos_j = from_pos

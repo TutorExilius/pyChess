@@ -4,12 +4,12 @@ from pathlib import Path
 from typing import Dict, Tuple
 
 from chess import logic
-from chess.my_types import Board
+from chess.my_types import Board, GameState
 from gui.my_widgets import BlackButton, States, WhiteButton
 from gui.promotion_piece_dialog import PromotionPieceDialog
 from PyQt5 import uic
-from PyQt5.QtCore import QCoreApplication, Qt, QTimer
-from PyQt5.QtWidgets import QLabel, QLayout, QMainWindow, QPushButton
+from PyQt5.QtCore import QCoreApplication, Qt  # , QTimer
+from PyQt5.QtWidgets import QLabel, QLayout, QMainWindow, QPushButton, QMessageBox
 
 
 class MainWindow(QMainWindow):
@@ -17,14 +17,16 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
 
         self.ui = uic.loadUi(Path(__file__).parent / "ui" / "main_window.ui", self)
-
         self.board = None
+        self.initialize_game()
+
+    def initialize_game(self) -> None:
         self.initialize_new_board()
         self.activated_square = None
 
-        s = 3000
-        print(f"Start Simulation in {s / 1000} seconds...")
-        QTimer.singleShot(s, partial(self.on_simulation_start, 0.0))
+        # s = 3000
+        # print(f"Start Simulation in {s / 1000} seconds...")
+        # QTimer.singleShot(s, partial(self.on_simulation_start, 0.0))
 
     @staticmethod
     def _clearlayout(layout: QLayout) -> None:
@@ -99,12 +101,21 @@ class MainWindow(QMainWindow):
             label.setText(piece.symbol)
 
     def on_clicked(self, _: bool, piece_button: QPushButton) -> None:
+        if self.board is None:
+            return
+
+        piece = piece_button.square.piece
+
         # avoid focusing empty squares and pieces with no move possibilities
         if self.activated_square is None:
-            piece = piece_button.square.piece
             possible_moves = logic.get_possible_moves(self.board, piece)
 
             if not possible_moves:
+                return
+
+            # piece is not none, so the color can be requested here
+            if self.board.next_move_color != piece.get_color():
+                print("Not your turn! Next move:", self.board.next_move_color)
                 return
 
             # no square focused yet
@@ -128,6 +139,14 @@ class MainWindow(QMainWindow):
                     self.activated_square.position, piece_button.square.position
                 )
                 self.activated_square = None
+
+        if self.board and self.board.kings_in_check:
+            print("king in check")
+            # TODO: neue (noch nicht) implementierte Methode in board benutzen,
+            #  dass eine Liste von möglichen bewegbaren Figuren und deren mölichen
+            #  Züge zurückliefert, die dazu führen die Schachsituation des Königs
+            #  aufzuheben. -> einschließlich die Zugmöglichkeiten des Königs,
+            #  die ihn aus dem Schach holen
 
     def initialize_new_board(self) -> None:
         def callback_dialog(transformable_piece_symbols: Dict[str, str]) -> str:
@@ -263,5 +282,30 @@ class MainWindow(QMainWindow):
         self.setFixedSize(self.sizeHint())
 
     def move_piece(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> None:
-        logic.move(self.board, from_pos, to_pos)
-        self.reset_highlights()
+        move_result = logic.move(self.board, from_pos, to_pos)
+
+        if move_result != GameState.CONTINUE:
+            msg_box = QMessageBox(self)
+            msg_box_title = "Game Over"
+
+            if move_result == GameState.CHECKMATE_BLACK:
+                msg_box_text = "WHITE won"
+                print("White won")
+            elif move_result == GameState.CHECKMATE_WHITE:
+                msg_box_text = "BLACK won"
+                print("Black won")
+            elif move_result == GameState.REMIS:
+                msg_box_text = "Remis."
+                print("Remis")
+            else:
+                raise TypeError(f"Move Return Type '{move_result}' is unknown")
+
+            self.reset_highlights()
+
+            msg_box.setText(msg_box_text)
+            msg_box.setStyleSheet("width: 100px; height: 30px;")
+            msg_box.setWindowTitle(msg_box_title)
+            msg_box.exec()
+            self.initialize_game()
+        else:
+            self.reset_highlights()
