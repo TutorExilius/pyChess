@@ -20,9 +20,13 @@ class MainWindow(QMainWindow):
         self.board = None
         self.initialize_game()
 
+        # connections
+        self.pushButton_reset_game.clicked.connect(self.initialize_game)
+
     def initialize_game(self) -> None:
         self.initialize_new_board()
         self.activated_square = None
+        self.pushButton_reset_game.setVisible(False)
 
         # s = 3000
         # print(f"Start Simulation in {s / 1000} seconds...")
@@ -92,16 +96,16 @@ class MainWindow(QMainWindow):
 
                 button.update_ui()
 
-        for i, piece in enumerate(logic.get_captured_pieces(self.board, "BLACK")):
+        for i, piece in enumerate(logic.get_captured_pieces(self.board, "black")):
             label = self.gridLayout_black.itemAtPosition(i, 0).widget()
             label.setText(piece.symbol)
 
-        for i, piece in enumerate(logic.get_captured_pieces(self.board, "WHITE")):
+        for i, piece in enumerate(logic.get_captured_pieces(self.board, "white")):
             label = self.gridLayout_white.itemAtPosition(i, 0).widget()
             label.setText(piece.symbol)
 
     def on_clicked(self, _: bool, piece_button: QPushButton) -> None:
-        if self.board is None:
+        if self.board is None or self.board.game_over:
             return
 
         piece = piece_button.square.piece
@@ -306,6 +310,9 @@ class MainWindow(QMainWindow):
             msg_box.setStyleSheet("width: 100px; height: 30px;")
             msg_box.setWindowTitle(msg_box_title)
             msg_box.exec()
-            self.initialize_game()
+
+            if self.board is not None:
+                self.board.game_over = True
+                self.pushButton_reset_game.setVisible(self.board.game_over)
         else:
             self.reset_highlights()

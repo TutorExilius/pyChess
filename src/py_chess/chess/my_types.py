@@ -282,16 +282,16 @@ class Board:
             Piece(symbol="♖", name="♖_2_white", position=(7, 7)),
         ]
 
-        # black pieces for player BLACK
-        self.player.append(Player("BLACK"))
+        # black pieces for player black
+        self.player.append(Player("black"))
         for i in range(2):
             for j in range(8):
                 piece = black_pieces[i * 8 + j]
                 self._board[i][j].piece = piece
                 self.player[0].pieces.append(piece)
 
-        # black pieces for player WHITE
-        self.player.append(Player("WHITE"))
+        # black pieces for player white
+        self.player.append(Player("white"))
         for i in range(2):
             for j in range(8):
                 piece = white_pieces[i * 8 + j]
