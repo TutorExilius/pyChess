@@ -5,6 +5,7 @@ from typing import Dict, Tuple
 
 from chess import logic
 from chess.my_types import Board, GameState
+from gui.replay_manager import ReplayManager
 from gui.my_widgets import BlackButton, States, WhiteButton
 from gui.promotion_piece_dialog import PromotionPieceDialog
 from PyQt5 import uic
@@ -19,6 +20,9 @@ class MainWindow(QMainWindow):
         self.ui = uic.loadUi(Path(__file__).parent / "ui" / "main_window.ui", self)
         self.board = None
         self.initialize_game()
+
+        self.replay_manager = ReplayManager(self)
+        self.replay_manager.show()
 
         # connections
         self.pushButton_reset_game.clicked.connect(self.initialize_game)
