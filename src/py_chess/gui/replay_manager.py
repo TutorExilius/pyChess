@@ -20,7 +20,10 @@ class ReplayManager(QMainWindow):
         self.lineEdit_delay_in_sec.setAlignment(Qt.AlignCenter)
 
         # sounds
-        self.select_all_sounds = ["media/doubleclick_select_all_1.wav"]
+        self.select_all_sounds = [
+            "media/doubleclick_select_all_1.wav",
+            "media/doubleclick_select_all_2.wav",
+        ]
 
         # validators
         delay_in_sec_validator = QRegExpValidator(
@@ -38,6 +41,9 @@ class ReplayManager(QMainWindow):
             self, "Open Document", QDir.currentPath(), "text files (*.txt)"
         )[0]
 
+        if not filename:
+            return
+
         self.lineEdit.setText(filename)
 
         with open(filename, encoding="utf8") as f:
@@ -54,11 +60,9 @@ class ReplayManager(QMainWindow):
         print(f"Delay: {delay} sec")
 
         items = self.listWidget.selectedItems()
-        x = []
-        for i in range(len(items)):
-            x.append(str(self.listWidget.selectedItems()[i].text()))
+        chess_notations = [item.text() for item in items]
 
-        print(x)
+        print(chess_notations)
 
     def select_all(self) -> None:
         self.listWidget.selectAll()
