@@ -19,6 +19,10 @@ flake8 = "^4.0.1"
 black = "^21.9b0"
 pytest = "^6.2.5"
 
+[virtualenvs]
+create = true
+in-project = true
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
