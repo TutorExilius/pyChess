@@ -17,7 +17,6 @@ PyQt5 = "^5.15.6"
 mypy = "^0.910"
 flake8 = "^4.0.1"
 black = "^21.9b0"
-pytest = "^6.2.5"
 
 [virtualenvs]
 create = true
