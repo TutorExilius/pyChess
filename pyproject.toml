@@ -2,3 +2,23 @@
 extend-exclude = '''
 /*\.ui$
 '''
+
+[tool.poetry]
+name = "pychess"
+version = "0.1.0"
+description = ""
+authors = ["Tutor Exilius <tutorexilius@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+PyQt5 = "^5.15.6"
+
+[tool.poetry.dev-dependencies]
+mypy = "^0.910"
+flake8 = "^4.0.1"
+black = "^21.9b0"
+pytest = "^6.2.5"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
