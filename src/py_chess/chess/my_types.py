@@ -713,6 +713,7 @@ class Board:
         from_pos: Tuple[int, int],
         to_pos: Tuple[int, int],
         move_type: MoveType = MoveType.NORMAL_MOVE,
+        promotion_piece: Optional[str] = None,
     ) -> None:
         from_i, from_j = from_pos
         to_i, to_j = to_pos
@@ -744,6 +745,14 @@ class Board:
 
         color_state_trigger = {"white": "black", "black": "white"}
         self.next_move_color = color_state_trigger[last_moved_color]
+
+        if promotion_piece:
+            self._transform(from_piece, promotion_piece)
+            transformed_square = self.get_square(*from_piece.position)
+            transformed_square.update_square()
+            self.last_moves.append(
+                (transformed_square, transformed_square, MoveType.PROMOTION)
+            )
 
     def castling_move(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> None:
         from_piece_pos_i, from_piece_pos_j = from_pos
@@ -798,7 +807,7 @@ class Board:
 
         self.move(from_pos, to_pos, MoveType.EN_PASSANT)
 
-    def open_promotion_piece_dialog(self, piece: Piece) -> None:
+    def open_promotion_piece_dialog(self, piece: Piece) -> str:
         if self.callback_dialog is not None:
             transormable_black_piece_symbols = {
                 "queen": "♛",
@@ -820,14 +829,7 @@ class Board:
             )
 
             result = self.callback_dialog(current_transformable_piece_symbols)
-
-            if result is not None:
-                self._transform(piece, result)
-                transformed_square = self.get_square(*piece.position)
-                transformed_square.update_square()
-                self.last_moves.append(
-                    (transformed_square, transformed_square, MoveType.PROMOTION)
-                )
+            return result
 
     def _transform(
         self, transforming_piece: Piece, to_transforming_symbol: str

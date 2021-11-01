@@ -1,7 +1,7 @@
 from copy import deepcopy
 from typing import List, Optional, Tuple
 
-from chess.my_types import Board, GameState, Piece, Square
+from chess.my_types import Board, GameState, Piece, Square, MoveType
 
 
 def is_collision_free_move(
@@ -149,8 +149,6 @@ def move(board: Board, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> No
         if is_diagonal_move and is_to_square_free:  # is en passant
             board.en_passant_move(from_pos, to_pos)
         else:
-            board.move(from_pos, to_pos)
-
             is_pawn_black = attacker_piece.get_color() == "black"
 
             if is_pawn_black:
@@ -158,8 +156,15 @@ def move(board: Board, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> No
             else:
                 top_i_line = 0
 
+            promotion = None
+
             if threatened_square_i == top_i_line:  # pawn arrived top line
-                board.open_promotion_piece_dialog(attacker_piece)
+                promotion = board.open_promotion_piece_dialog(attacker_piece)
+
+            move_type = (
+                MoveType.NORMAL_MOVE if promotion is None else MoveType.PROMOTION
+            )
+            board.move(from_pos, to_pos, move_type, promotion)
     else:
         board.move(from_pos, to_pos)
 
