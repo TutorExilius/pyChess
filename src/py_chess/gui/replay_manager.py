@@ -23,6 +23,7 @@ class ReplayManager(QMainWindow):
         self.select_all_sounds = [
             "media/doubleclick_select_all_1.wav",
             "media/doubleclick_select_all_2.wav",
+            "media/doubleclick_select_all_3.wav",
         ]
 
         # validators
