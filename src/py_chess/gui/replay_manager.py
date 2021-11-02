@@ -105,7 +105,7 @@ class ReplayManager(QMainWindow):
     def _parse_move(
         self, move_notation: List[str]
     ) -> Tuple[List[str], List[Tuple[Tuple[int, int], Tuple[int, int]]]]:
-        rows = {"1": 0, "2": 1, "3": 2, "4": 3, "5": 4, "6": 5, "7": 6, "8": 7}
+        rows = {"1": 7, "2": 6, "3": 5, "4": 4, "5": 3, "6": 2, "7": 1, "8": 0}
         cols = {"a": 0, "b": 1, "c": 2, "d": 3, "e": 4, "f": 5, "g": 6, "h": 7}
 
         possible_seperators = ["–", "x", "×"]

@@ -132,7 +132,7 @@ def move(board: Board, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> No
     threatened_square = board.get_square(threatened_square_i, threatened_square_j)
 
     if attacker_piece is None:
-        return
+        raise "Moving piece is None."
 
     if attacker_piece.symbol in ["♔", "♚"]:
         is_castling_move = abs(attacker_piece_j - threatened_square_j) > 1
