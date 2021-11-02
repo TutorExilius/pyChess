@@ -69,10 +69,17 @@ class ReplayManager(QMainWindow):
         print(chess_notations)
 
         for chess_notation in chess_notations:
+            # replace all " e.p." to"_e.p." to avoid to be splitted in
+            #  parse_notation(..) -> string.split(" ")
+            while " e.p." in chess_notation:
+                chess_notation = chess_notation.replace(" e.p.", "_e.p.")
+
             print("Move:", chess_notation)
             promotions, moves = self.parse_notation(chess_notation)
 
             for i, move in enumerate(moves):
+                time.sleep(delay)
+
                 from_pos, to_pos, move_type = move
                 promotion = promotions[i]
 
@@ -87,17 +94,16 @@ class ReplayManager(QMainWindow):
 
                 self.game_window.update_ui()
                 QCoreApplication.processEvents()
-                time.sleep(delay)
 
     def parse_notation(
-            self, chess_notation: str
+        self, chess_notation: str
     ) -> Tuple[List[str], List[Tuple[Tuple[int, int], Tuple[int, int]]]]:
         move_parts = chess_notation.split(" ")
         move_parts = move_parts[1:]
         return self._parse_move(move_parts)
 
     def _parse_move(
-            self, move_notation: List[str]
+        self, move_notation: List[str]
     ) -> Tuple[List[str], List[Tuple[Tuple[int, int], Tuple[int, int]]]]:
         rows = {"1": 0, "2": 1, "3": 2, "4": 3, "5": 4, "6": 5, "7": 6, "8": 7}
         cols = {"a": 0, "b": 1, "c": 2, "d": 3, "e": 4, "f": 5, "g": 6, "h": 7}
@@ -145,7 +151,7 @@ class ReplayManager(QMainWindow):
                 )
 
                 if any(
-                        postfix in black_to_pos for postfix in possible_promotion_postfixes
+                    postfix in black_to_pos for postfix in possible_promotion_postfixes
                 ):
                     black_promoted_piece = black_to_pos[-1]
             else:
@@ -218,8 +224,8 @@ class ReplayManager(QMainWindow):
         return move_notation[1:] if move_notation[0].isupper() else move_notation
 
     def remove_en_passant_postfix(self, move_notation: str) -> Tuple[bool, str]:
-        en_passant_found = "e.p." in move_notation
-        return en_passant_found, move_notation.removesuffix("e.p.")
+        en_passant_found = move_notation.endswith("_e.p.")
+        return en_passant_found, move_notation.removesuffix("_e.p.")
 
     def use_seperator(self, move_notation: str, possible_seperators: List[str]) -> str:
         for sep in possible_seperators:
