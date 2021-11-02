@@ -714,6 +714,7 @@ class Board:
         to_pos: Tuple[int, int],
         move_type: MoveType = MoveType.NORMAL_MOVE,
         promotion_piece: Optional[str] = None,
+        force_trigger=False,
     ) -> None:
         from_i, from_j = from_pos
         to_i, to_j = to_pos
@@ -740,11 +741,13 @@ class Board:
         self.last_moves.append((from_square, to_square, move_type))
         self.reinitialize_threatenings()
 
-        last_moved_piece = to_square.piece
-        last_moved_color = last_moved_piece.get_color()
-
-        color_state_trigger = {"white": "black", "black": "white"}
-        self.next_move_color = color_state_trigger[last_moved_color]
+        if (
+            force_trigger
+            or move_type == MoveType.NORMAL_MOVE
+            or move_type == MoveType.EN_PASSANT
+        ):
+            color_state_trigger = {"white": "black", "black": "white"}
+            self.next_move_color = color_state_trigger[self.next_move_color]
 
         if promotion_piece:
             self._transform(from_piece, promotion_piece)
@@ -771,6 +774,7 @@ class Board:
             (from_piece_pos_i, from_piece_pos_j),
             (from_piece_pos_i, new_from_piece_pos_j),
             MoveType.CASTLING_MOVE,
+            force_trigger=True,
         )
         self.move(
             (to_square_pos_i, to_square_pos_j),
