@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>350</width>
-    <height>535</height>
+    <height>687</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -41,7 +41,7 @@ top: 3px;
 padding: 0px 5px 0px 5px;
 }</string>
    </property>
-   <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,2,0,0,0,0,0">
+   <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0,0,2,0,0,0,0,0">
     <property name="leftMargin">
      <number>0</number>
     </property>
@@ -51,6 +51,68 @@ padding: 0px 5px 0px 5px;
     <property name="rightMargin">
      <number>0</number>
     </property>
+    <item>
+     <spacer name="verticalSpacer_6">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+      <property name="sizeType">
+       <enum>QSizePolicy::Fixed</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>0</width>
+        <height>8</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_10">
+      <property name="bottomMargin">
+       <number>8</number>
+      </property>
+      <item>
+       <spacer name="horizontalSpacer_4">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::MinimumExpanding</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>0</width>
+          <height>0</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_reset_game">
+        <property name="text">
+         <string>Reset Game</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_5">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Fixed</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>26</width>
+          <height>0</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </item>
     <item>
      <widget class="QGroupBox" name="groupBox_load_file">
       <property name="title">

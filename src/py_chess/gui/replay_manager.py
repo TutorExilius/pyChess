@@ -36,6 +36,7 @@ class ReplayManager(QMainWindow):
         self.lineEdit_delay_in_sec.setValidator(delay_in_sec_validator)
 
         # connection
+        self.pushButton_reset_game.clicked.connect(self.reset_game)
         self.pushButton_replay.clicked.connect(self.simulate_game)
         self.pushButton_load_file.clicked.connect(self.open_txt_file)
         self.listWidget.itemDoubleClicked.connect(lambda _: self.select_all())
@@ -57,6 +58,10 @@ class ReplayManager(QMainWindow):
             self.listWidget.addItem(line)
 
         self.listWidget.selectAll()
+
+    def reset_game(self):
+        self.game_window.initialize_game()
+        self.game_window.update_ui()
 
     def simulate_game(self) -> None:
         board = self.game_window.board
