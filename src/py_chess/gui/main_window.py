@@ -179,7 +179,7 @@ class MainWindow(QMainWindow):
         self.activated_square = None
         # ---
 
-        for _ in range(15):
+        for i in range(15):
             label_1 = QLabel()
             label_1.setStyleSheet("font-size: 30px;")
             label_1.setAlignment(Qt.AlignCenter)
@@ -188,11 +188,8 @@ class MainWindow(QMainWindow):
             label_2.setStyleSheet("font-size: 30px;")
             label_2.setAlignment(Qt.AlignCenter)
 
-            self.gridLayout_black.addWidget(label_1)
-            self.gridLayout_white.addWidget(label_2)
-
-        def set_button_text(button: QPushButton, button_text: str) -> None:
-            button.setText(button_text)
+            self.gridLayout_black.addWidget(label_1, i, 0)
+            self.gridLayout_white.addWidget(label_2, i, 0)
 
         FACTOR = 60
         SIZE = f"width: {FACTOR + 10}px; height: {FACTOR + 10}px;"
@@ -270,6 +267,9 @@ class MainWindow(QMainWindow):
 
             self.gridLayout_board.addWidget(label_1, i + 1, 0)
             self.gridLayout_board.addWidget(label_2, i + 1, 10)
+
+        def set_button_text(button: QPushButton, button_text: str) -> None:
+            button.setText(button_text)
 
         for i in range(1, 9):
             for j in range(1, 9):
