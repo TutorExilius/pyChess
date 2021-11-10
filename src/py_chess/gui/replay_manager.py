@@ -1,5 +1,6 @@
 import random
 import time
+from functools import partial
 from pathlib import Path
 from typing import List, Tuple
 
@@ -16,6 +17,8 @@ class ReplayManager(QMainWindow):
         super(ReplayManager, self).__init__(parent=parent)
 
         self.game_window = parent
+        self.on_simulating = False
+        self.recording = False
 
         self.ui = uic.loadUi(Path(__file__).parent / "ui" / "replay_manager.ui", self)
         self.setWindowFlag(Qt.WindowCloseButtonHint, False)
@@ -40,8 +43,40 @@ class ReplayManager(QMainWindow):
         self.pushButton_replay.clicked.connect(self.simulate_game)
         self.pushButton_load_file.clicked.connect(self.open_txt_file)
         self.listWidget.itemDoubleClicked.connect(lambda _: self.select_all())
+        self.pushButton_start_recording.clicked.connect(partial(self.record, True))
+        self.pushButton_stop_recording.clicked.connect(partial(self.record, False))
+
+    def record(self, recording: bool) -> None:
+        """Handle record functionality.
+
+        :param recording: True: start recording.
+                          False: stop recording.
+        """
+
+        if recording:
+            self._disable_recording_start()
+            print("Start recording game...")
+            self.recording = True
+
+            import pprint
+
+            pprint.pprint(self.game_window.board.last_moves.chess_notation_format())
+        else:
+            self._enable_recording_start()
+            print("Stop recording game...")
+            self.recording = False
+
+    def _enable_recording_start(self):
+        self.pushButton_start_recording.setEnabled(True)
+        self.pushButton_stop_recording.setEnabled(False)
+
+    def _disable_recording_start(self):
+        self.pushButton_start_recording.setEnabled(False)
+        self.pushButton_stop_recording.setEnabled(True)
 
     def open_txt_file(self) -> None:
+        self.listWidget.clear()
+
         filename = QFileDialog.getOpenFileName(
             self, "Open Document", QDir.currentPath(), "text files (*.txt)"
         )[0]
@@ -63,42 +98,68 @@ class ReplayManager(QMainWindow):
         self.game_window.initialize_game()
         self.game_window.update_ui()
 
+    def disable_ui_elements(self):
+        self.groupBox_load_file.setEnabled(False)
+        self.groupBox_move_steps.setEnabled(False)
+        self.groupBox_settings.setEnabled(False)
+        self.pushButton_reset_game.setEnabled(False)
+        self.pushButton_replay.setEnabled(False)
+
+    def enable_ui_elements(self):
+        self.groupBox_load_file.setEnabled(True)
+        self.enabled = self.groupBox_move_steps.setEnabled(True)
+        self.groupBox_settings.setEnabled(True)
+        self.pushButton_reset_game.setEnabled(True)
+        self.pushButton_replay.setEnabled(True)
+
     def simulate_game(self) -> None:
-        board = self.game_window.board
-        delay = float(self.lineEdit_delay_in_sec.text())
-        print(f"Delay: {delay} sec")
+        if not self.on_simulating:
+            self.disable_ui_elements()
+            self.update()
 
-        items = self.listWidget.selectedItems()
-        chess_notations = [item.text() for item in items]
+            self.on_simulating = True
 
-        print(chess_notations)
+            self.reset_game()
 
-        for chess_notation in chess_notations:
-            # replace all " e.p." to"_e.p." to avoid to be splitted in
-            #  parse_notation(..) -> string.split(" ")
-            while " e.p." in chess_notation:
-                chess_notation = chess_notation.replace(" e.p.", "_e.p.")
+            board = self.game_window.board
+            delay = float(self.lineEdit_delay_in_sec.text())
+            print(f"Delay: {delay} sec")
 
-            print("Move:", chess_notation)
-            promotions, moves = self.parse_notation(chess_notation)
+            items = self.listWidget.selectedItems()
+            chess_notations = [item.text() for item in items]
 
-            for i, move in enumerate(moves):
-                time.sleep(delay)
+            print(chess_notations)
 
-                from_pos, to_pos, move_type = move
-                promotion = promotions[i]
+            for chess_notation in chess_notations:
+                # replace all " e.p." to"_e.p." to avoid to be splitted in
+                #  parse_notation(..) -> string.split(" ")
+                while " e.p." in chess_notation:
+                    chess_notation = chess_notation.replace(" e.p.", "_e.p.")
 
-                if move_type == MoveType.NORMAL_MOVE:
-                    board.move(from_pos, to_pos, move_type, promotion)
-                elif move_type == MoveType.EN_PASSANT:
-                    board.en_passant_move(from_pos, to_pos)
-                elif move_type == MoveType.CASTLING_MOVE:
-                    board.castling_move(from_pos, to_pos)
-                else:
-                    raise TypeError("Move Type unknown.")
+                print("Move:", chess_notation)
+                promotions, moves = self.parse_notation(chess_notation)
 
-                self.game_window.update_ui()
-                QCoreApplication.processEvents()
+                for i, move in enumerate(moves):
+                    time.sleep(delay)
+
+                    from_pos, to_pos, move_type = move
+                    promotion = promotions[i]
+
+                    if move_type == MoveType.NORMAL_MOVE:
+                        board.move(from_pos, to_pos, move_type, promotion)
+                    elif move_type == MoveType.EN_PASSANT:
+                        board.en_passant_move(from_pos, to_pos)
+                    elif move_type == MoveType.CASTLING_MOVE:
+                        board.castling_move(from_pos, to_pos)
+                    else:
+                        raise TypeError("Move Type unknown.")
+
+                    self.game_window.update_ui()
+                    QCoreApplication.processEvents()
+
+            self.on_simulating = False
+            self.enable_ui_elements()
+            self.update()
 
     def parse_notation(
         self, chess_notation: str

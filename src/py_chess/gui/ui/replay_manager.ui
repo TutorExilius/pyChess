@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>350</width>
-    <height>687</height>
+    <height>688</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -72,6 +72,39 @@ padding: 0px 5px 0px 5px;
       <property name="bottomMargin">
        <number>8</number>
       </property>
+      <item>
+       <spacer name="horizontalSpacer_6">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Fixed</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>26</width>
+          <height>0</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_start_recording">
+        <property name="text">
+         <string>Start Rec</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_stop_recording">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string>Stop Rec</string>
+        </property>
+       </widget>
+      </item>
       <item>
        <spacer name="horizontalSpacer_4">
         <property name="orientation">

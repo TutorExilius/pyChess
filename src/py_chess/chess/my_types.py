@@ -1,7 +1,16 @@
 from __future__ import annotations
-from typing import Callable, List, Set, Optional, Tuple
+
 from copy import deepcopy
 from enum import Enum
+from typing import Callable, List, Optional, Set, Tuple
+
+
+class ChessNotationList(list):
+    def chess_notation_format(self):
+        return [
+            f"{from_pos.position} - {to_pos.position} - {move_type}"
+            for from_pos, to_pos, move_type in self
+        ]
 
 
 class GameState(str, Enum):
@@ -238,7 +247,9 @@ class Board:
         w, h = 8, 8
         self._board = [[Square(position=(i, j)) for j in range(w)] for i in range(h)]
         self.player: List[Player] = []
-        self.last_moves: List[Tuple[Square, Square, MoveType]] = []
+        self.last_moves: List[
+            Tuple[Square, Square, MoveType, str]
+        ] = ChessNotationList()
         self.kings_in_check: List[Piece] = []
         self.king_black_piece = Piece(symbol="♚", name="♚_1_black", position=(0, 4))
         self.king_white_piece = Piece(symbol="♔", name="♔_1_white", position=(7, 4))
@@ -627,7 +638,7 @@ class Board:
                     if not self.last_moves:
                         return False
 
-                    last_from_square, last_to_square, _ = self.last_moves[-1]
+                    last_from_square, last_to_square, _, _ = self.last_moves[-1]
                     last_move_piece = last_to_square.piece
 
                     was_two_step_opening = (
@@ -698,12 +709,7 @@ class Board:
         collision_free_moves: List[Tuple[int, int]] = []
         for basic_move in basic_moves:
             square = self.get_square(*basic_move)
-            if (
-                # piece != other_piece
-                # and other_piece.get_color() != piece.get_color()
-                # and
-                self.is_collision_free_move(piece, square)
-            ):
+            if self.is_collision_free_move(piece, square):
                 collision_free_moves.append(basic_move)
 
         return collision_free_moves
@@ -716,6 +722,7 @@ class Board:
         promotion_piece: Optional[str] = None,
         force_trigger=False,
     ) -> None:
+        print(self.next_move_color)
         from_i, from_j = from_pos
         to_i, to_j = to_pos
 
@@ -735,27 +742,18 @@ class Board:
         to_square.piece = from_piece
         from_square.piece = None
 
-        from_square.update_square()
-        to_square.update_square()
+        if promotion_piece:
+            self._transform(from_piece, promotion_piece)
 
-        self.last_moves.append((from_square, to_square, move_type))
-        self.reinitialize_threatenings()
-
-        if (
-            force_trigger
-            or move_type == MoveType.NORMAL_MOVE
-            or move_type == MoveType.EN_PASSANT
-        ):
+        if force_trigger or move_type != MoveType.CASTLING_MOVE:
             color_state_trigger = {"white": "black", "black": "white"}
             self.next_move_color = color_state_trigger[self.next_move_color]
 
-        if promotion_piece:
-            self._transform(from_piece, promotion_piece)
-            transformed_square = self.get_square(*from_piece.position)
-            transformed_square.update_square()
-            self.last_moves.append(
-                (transformed_square, transformed_square, MoveType.PROMOTION)
-            )
+        from_square.update_square()
+        to_square.update_square()
+
+        self.last_moves.append((from_square, to_square, move_type, promotion_piece))
+        self.reinitialize_threatenings()
 
     def castling_move(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> None:
         from_piece_pos_i, from_piece_pos_j = from_pos

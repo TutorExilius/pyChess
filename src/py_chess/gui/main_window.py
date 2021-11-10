@@ -112,6 +112,9 @@ class MainWindow(QMainWindow):
         if self.board is None or self.board.game_over:
             return
 
+        if self.replay_manager is not None and self.replay_manager.on_simulating:
+            return
+
         piece = piece_button.square.piece
 
         # avoid focusing empty squares and pieces with no move possibilities
